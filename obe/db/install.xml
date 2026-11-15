@@ -1,0 +1,735 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/obe/db"
+       VERSION="2026111501"
+       COMMENT="XMLDB file for local_obe"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
+
+    <TABLES>
+
+        <!-- ===================================================== -->
+        <!-- TABLE: local_obe_prodi -->
+        <!-- ===================================================== -->
+
+        <TABLE NAME="local_obe_prodi" COMMENT="Master data program studi">
+
+            <FIELDS>
+
+                <FIELD NAME="id"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"
+                       SEQUENCE="true"/>
+
+                <FIELD NAME="nama_prodi"
+                       TYPE="char"
+                       LENGTH="100"
+                       NOTNULL="true"/>
+
+                <FIELD NAME="kode_prodi"
+                       TYPE="char"
+                       LENGTH="20"
+                       NOTNULL="true"/>
+              <FIELD NAME="userid_kaprodi"
+                     TYPE="int"
+                     LENGTH="10"
+                     NOTNULL="false"
+                     DEFAULT="0"/>
+
+                <FIELD NAME="keterangan"
+                       TYPE="text"
+                       NOTNULL="false"/>
+
+            </FIELDS>
+
+            <KEYS>
+                <KEY NAME="primary"
+                     TYPE="primary"
+                     FIELDS="id"/>
+            </KEYS>
+
+        </TABLE>
+
+        <!-- ===================================================== -->
+        <!-- TABLE: local_obe_tahun_akademik -->
+        <!-- ===================================================== -->
+
+        <TABLE NAME="local_obe_tahun_akademik" COMMENT="Master tahun akademik">
+
+            <FIELDS>
+
+                <FIELD NAME="id"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"
+                       SEQUENCE="true"/>
+
+                <FIELD NAME="nama_tahun"
+                       TYPE="char"
+                       LENGTH="20"
+                       NOTNULL="true"/>
+
+                <FIELD NAME="status_aktif"
+                       TYPE="int"
+                       LENGTH="1"
+                       NOTNULL="true"
+                       DEFAULT="0"/>
+
+            </FIELDS>
+
+            <KEYS>
+                <KEY NAME="primary"
+                     TYPE="primary"
+                     FIELDS="id"/>
+            </KEYS>
+
+        </TABLE>
+
+        <!-- ===================================================== -->
+        <!-- TABLE: local_obe_angkatan -->
+        <!-- ===================================================== -->
+
+        <TABLE NAME="local_obe_angkatan" COMMENT="Data angkatan mahasiswa">
+
+            <FIELDS>
+
+                <FIELD NAME="id"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"
+                       SEQUENCE="true"/>
+
+                <FIELD NAME="id_prodi"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"/>
+
+                <FIELD NAME="tahun_masuk"
+                       TYPE="int"
+                       LENGTH="4"
+                       NOTNULL="true"/>
+
+                <FIELD NAME="nama_angkatan"
+                       TYPE="char"
+                       LENGTH="50"
+                       NOTNULL="true"/>
+
+                <FIELD NAME="status_aktif"
+                       TYPE="int"
+                       LENGTH="1"
+                       NOTNULL="true"
+                       DEFAULT="1"/>
+
+            </FIELDS>
+
+            <KEYS>
+
+                <KEY NAME="primary"
+                     TYPE="primary"
+                     FIELDS="id"/>
+
+                <KEY NAME="fk_angkatan_prodi"
+                     TYPE="foreign"
+                     FIELDS="id_prodi"
+                     REFTABLE="local_obe_prodi"
+                     REFFIELDS="id"/>
+
+            </KEYS>
+
+            <INDEXES>
+
+                <INDEX NAME="prodi_idx"
+                       UNIQUE="false"
+                       FIELDS="id_prodi"/>
+
+            </INDEXES>
+
+        </TABLE>
+
+        <!-- ===================================================== -->
+        <!-- TABLE: local_obe_kompetensi -->
+        <!-- ===================================================== -->
+
+        <TABLE NAME="local_obe_kompetensi" COMMENT="Data kompetensi CPL CPMK Sub CPMK">
+
+            <FIELDS>
+
+                <FIELD NAME="id"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"
+                       SEQUENCE="true"/>
+
+                <FIELD NAME="id_prodi"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"/>
+
+                <FIELD NAME="frameworkid"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"
+                       DEFAULT="0"/>
+
+                <FIELD NAME="id_tahun_akademik"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"
+                       DEFAULT="0"/>
+
+              <FIELD NAME="competencyid"
+                     TYPE="int"
+                     LENGTH="10"
+                     NOTNULL="true"
+                     DEFAULT="0"/>
+
+                <FIELD NAME="nama_kompetensi"
+                       TYPE="char"
+                       LENGTH="255"
+                       NOTNULL="true"/>
+
+                <FIELD NAME="deskripsi"
+                     TYPE="text"
+                     NOTNULL="false"/>
+
+                <FIELD NAME="tipe"
+                       TYPE="char"
+                       LENGTH="20"
+                       NOTNULL="true"/>
+
+                <FIELD NAME="parent_id"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="false"/>
+
+              
+
+            </FIELDS>
+
+            <KEYS>
+
+                <KEY NAME="primary"
+                     TYPE="primary"
+                     FIELDS="id"/>
+
+                <KEY NAME="fk_kompetensi_prodi"
+                     TYPE="foreign"
+                     FIELDS="id_prodi"
+                     REFTABLE="local_obe_prodi"
+                     REFFIELDS="id"/>
+
+                <KEY NAME="fk_kompetensi_tahun"
+                     TYPE="foreign"
+                     FIELDS="id_tahun_akademik"
+                     REFTABLE="local_obe_tahun_akademik"
+                     REFFIELDS="id"/>
+
+                <KEY NAME="fk_kompetensi_parent"
+                     TYPE="foreign"
+                     FIELDS="parent_id"
+                     REFTABLE="local_obe_kompetensi"
+                     REFFIELDS="id"/>
+
+            </KEYS>
+
+            <INDEXES>
+
+                <INDEX NAME="prodi_idx"
+                       UNIQUE="false"
+                       FIELDS="id_prodi"/>
+
+                <INDEX NAME="tahun_akademik_idx"
+                       UNIQUE="false"
+                       FIELDS="id_tahun_akademik"/>
+              
+              <INDEX NAME="competencyid_idx"
+                     UNIQUE="false"
+                     FIELDS="competencyid"/>
+
+            </INDEXES>
+
+        </TABLE>
+
+        <!-- ===================================================== -->
+        <!-- TABLE: local_obe_mata_kuliah -->
+        <!-- ===================================================== -->
+
+        <TABLE NAME="local_obe_mata_kuliah" COMMENT="Data mata kuliah">
+
+            <FIELDS>
+
+                <FIELD NAME="id"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"
+                       SEQUENCE="true"/>
+
+                <FIELD NAME="id_prodi"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"/>
+
+                <FIELD NAME="kode_mk"
+                       TYPE="char"
+                       LENGTH="20"
+                       NOTNULL="true"/>
+
+                <FIELD NAME="nama_mk"
+                       TYPE="char"
+                       LENGTH="150"
+                       NOTNULL="true"/>
+
+                <FIELD NAME="sks_mk"
+                       TYPE="int"
+                       LENGTH="2"
+                       NOTNULL="true"/>
+
+            </FIELDS>
+
+            <KEYS>
+
+                <KEY NAME="primary"
+                     TYPE="primary"
+                     FIELDS="id"/>
+
+                <KEY NAME="fk_mk_prodi"
+                     TYPE="foreign"
+                     FIELDS="id_prodi"
+                     REFTABLE="local_obe_prodi"
+                     REFFIELDS="id"/>
+
+            </KEYS>
+
+            <INDEXES>
+
+                <INDEX NAME="prodi_idx"
+                       UNIQUE="false"
+                       FIELDS="id_prodi"/>
+
+            </INDEXES>
+
+        </TABLE>
+
+        <!-- ===================================================== -->
+        <!-- TABLE: local_obe_prodi_framework -->
+        <!-- ===================================================== -->
+
+        <TABLE NAME="local_obe_prodi_framework" COMMENT="Relasi prodi dan framework">
+
+            <FIELDS>
+
+                <FIELD NAME="id"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"
+                       SEQUENCE="true"/>
+
+                <FIELD NAME="id_prodi"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"/>
+
+                <FIELD NAME="frameworkid"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"/>
+
+                <FIELD NAME="id_tahun_akademik"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"
+                       DEFAULT="0"/>
+
+            </FIELDS>
+
+            <KEYS>
+
+                <KEY NAME="primary"
+                     TYPE="primary"
+                     FIELDS="id"/>
+
+                <KEY NAME="fk_pf_prodi"
+                     TYPE="foreign"
+                     FIELDS="id_prodi"
+                     REFTABLE="local_obe_prodi"
+                     REFFIELDS="id"/>
+
+                <KEY NAME="fk_pf_tahun"
+                     TYPE="foreign"
+                     FIELDS="id_tahun_akademik"
+                     REFTABLE="local_obe_tahun_akademik"
+                     REFFIELDS="id"/>
+
+            </KEYS>
+
+            <INDEXES>
+
+                <INDEX NAME="prodi_idx"
+                       UNIQUE="false"
+                       FIELDS="id_prodi"/>
+
+                <INDEX NAME="tahun_idx"
+                       UNIQUE="false"
+                       FIELDS="id_tahun_akademik"/>
+
+            </INDEXES>
+
+        </TABLE>
+
+        <!-- ===================================================== -->
+        <!-- TABLE: local_obe_relasi_kelas -->
+        <!-- ===================================================== -->
+
+        <TABLE NAME="local_obe_relasi_kelas" COMMENT="Relasi kelas dan mata kuliah">
+
+            <FIELDS>
+
+                <FIELD NAME="id"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"
+                       SEQUENCE="true"/>
+
+                <FIELD NAME="id_mata_kuliah"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"/>
+
+                <FIELD NAME="id_kursus_moodle"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"/>
+
+                <FIELD NAME="id_angkatan"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"/>
+
+                <FIELD NAME="id_tahun_akademik"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"
+                       DEFAULT="0"/>
+
+                <FIELD NAME="waktu_koneksi"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"
+                       DEFAULT="0"/>
+
+            </FIELDS>
+
+            <KEYS>
+
+                <KEY NAME="primary"
+                     TYPE="primary"
+                     FIELDS="id"/>
+
+                <KEY NAME="fk_relasi_mk"
+                     TYPE="foreign"
+                     FIELDS="id_mata_kuliah"
+                     REFTABLE="local_obe_mata_kuliah"
+                     REFFIELDS="id"/>
+
+                <KEY NAME="fk_relasi_angkatan"
+                     TYPE="foreign"
+                     FIELDS="id_angkatan"
+                     REFTABLE="local_obe_angkatan"
+                     REFFIELDS="id"/>
+
+                <KEY NAME="fk_relasi_tahun"
+                     TYPE="foreign"
+                     FIELDS="id_tahun_akademik"
+                     REFTABLE="local_obe_tahun_akademik"
+                     REFFIELDS="id"/>
+
+            </KEYS>
+
+            <INDEXES>
+                <INDEX NAME="course_unique" UNIQUE="true" FIELDS="id_kursus_moodle"/>
+
+                <INDEX NAME="tahun_akademik_idx"
+                       UNIQUE="false"
+                       FIELDS="id_tahun_akademik"/>
+
+            </INDEXES>
+
+        </TABLE>
+
+        <!-- ===================================================== -->
+        <!-- TABLE: local_obe_bobot_relasi -->
+        <!-- ===================================================== -->
+
+        <TABLE NAME="local_obe_bobot_relasi" COMMENT="Bobot relasi kompetensi">
+
+            <FIELDS>
+
+                <FIELD NAME="id"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"
+                       SEQUENCE="true"/>
+
+                <FIELD NAME="id_kompetensi_asal"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"/>
+
+                <FIELD NAME="tipe_asal"
+                       TYPE="char"
+                       LENGTH="20"
+                       NOTNULL="true"/>
+
+                <FIELD NAME="id_kompetensi_tujuan"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"/>
+
+                <FIELD NAME="tipe_tujuan"
+                       TYPE="char"
+                       LENGTH="20"
+                       NOTNULL="true"/>
+
+                <FIELD NAME="nilai_bobot"
+                       TYPE="number"
+                       LENGTH="5"
+                       DECIMALS="2"
+                       NOTNULL="true"
+                       DEFAULT="0.00"/>
+
+                <FIELD NAME="id_tahun_akademik"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"
+                       DEFAULT="0"/>
+
+                <FIELD NAME="waktu_ubah"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"
+                       DEFAULT="0"/>
+
+            </FIELDS>
+
+            <KEYS>
+
+                <KEY NAME="primary"
+                     TYPE="primary"
+                     FIELDS="id"/>
+
+                <KEY NAME="fk_bobot_asal"
+                     TYPE="foreign"
+                     FIELDS="id_kompetensi_asal"
+                     REFTABLE="local_obe_kompetensi"
+                     REFFIELDS="id"/>
+
+                <KEY NAME="fk_bobot_tujuan"
+                     TYPE="foreign"
+                     FIELDS="id_kompetensi_tujuan"
+                     REFTABLE="local_obe_kompetensi"
+                     REFFIELDS="id"/>
+
+                <KEY NAME="fk_bobot_tahun"
+                     TYPE="foreign"
+                     FIELDS="id_tahun_akademik"
+                     REFTABLE="local_obe_tahun_akademik"
+                     REFFIELDS="id"/>
+
+            </KEYS>
+
+            <INDEXES>
+
+                <INDEX NAME="asal_tujuan_idx"
+                       UNIQUE="false"
+                       FIELDS="id_kompetensi_asal, id_kompetensi_tujuan, id_tahun_akademik"/>
+
+            </INDEXES>
+
+        </TABLE>
+
+        <!-- ===================================================== -->
+        <!-- TABLE: local_obe_aktivitas_map -->
+        <!-- ===================================================== -->
+
+        <TABLE NAME="local_obe_aktivitas_map" COMMENT="Pemetaan aktivitas">
+
+            <FIELDS>
+
+                <FIELD NAME="id"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"
+                       SEQUENCE="true"/>
+
+                <FIELD NAME="cmid"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"/>
+
+                <FIELD NAME="sub_cpmk_id"
+                       TYPE="int"
+                       LENGTH="10"
+                       NOTNULL="true"/>
+
+                <FIELD NAME="bobot_aktivitas"
+                       TYPE="number"
+                       LENGTH="10"
+                       DECIMALS="2"
+                       NOTNULL="true"
+                       DEFAULT="1.00"/>
+
+            </FIELDS>
+
+            <KEYS>
+
+                <KEY NAME="primary"
+                     TYPE="primary"
+                     FIELDS="id"/>
+
+                <KEY NAME="fk_aktivitas_subcpmk"
+                     TYPE="foreign"
+                     FIELDS="sub_cpmk_id"
+                     REFTABLE="local_obe_kompetensi"
+                     REFFIELDS="id"/>
+
+            </KEYS>
+
+            <INDEXES>
+
+                <INDEX NAME="cmid_idx"
+                       UNIQUE="true"
+                       FIELDS="cmid"/>
+
+                <INDEX NAME="subcpmk_idx"
+                       UNIQUE="false"
+                       FIELDS="sub_cpmk_id"/>
+
+            </INDEXES>
+
+        </TABLE>
+
+       <!-- ===================================================== -->
+       <!-- TABLE: local_obe_skala_nilai -->
+       <!-- ===================================================== -->
+
+       <TABLE NAME="local_obe_skala_nilai" COMMENT="Master skala nilai kompetensi">
+
+       <FIELDS>
+
+              <FIELD NAME="id"
+                     TYPE="int"
+                     LENGTH="10"
+                     NOTNULL="true"
+                     SEQUENCE="true"/>
+
+              <FIELD NAME="id_prodi"
+                     TYPE="int"
+                     LENGTH="10"
+                     NOTNULL="true"/>
+
+              <FIELD NAME="id_tahun_akademik"
+                     TYPE="int"
+                     LENGTH="10"
+                     NOTNULL="true"
+                     DEFAULT="0"/>
+
+              <FIELD NAME="tipe_kompetensi"
+                     TYPE="char"
+                     LENGTH="20"
+                     NOTNULL="true"/>
+
+              <FIELD NAME="huruf_nilai"
+                     TYPE="char"
+                     LENGTH="2"
+                     NOTNULL="true"/>
+
+              <FIELD NAME="nilai_min"
+                     TYPE="number"
+                     LENGTH="5"
+                     DECIMALS="2"
+                     NOTNULL="true"/>
+
+              <FIELD NAME="nilai_max"
+                     TYPE="number"
+                     LENGTH="5"
+                     DECIMALS="2"
+                     NOTNULL="true"/>
+
+              <FIELD NAME="status_kompeten"
+                     TYPE="int"
+                     LENGTH="1"
+                     NOTNULL="true"
+                     DEFAULT="0"/>
+
+              <FIELD NAME="timecreated"
+                     TYPE="int"
+                     LENGTH="10"
+                     NOTNULL="true"
+                     DEFAULT="0"/>
+
+              <FIELD NAME="timemodified"
+                     TYPE="int"
+                     LENGTH="10"
+                     NOTNULL="true"
+                     DEFAULT="0"/>
+
+       </FIELDS>
+
+       <KEYS>
+
+              <KEY NAME="primary"
+              TYPE="primary"
+              FIELDS="id"/>
+
+              <KEY NAME="fk_skala_prodi"
+              TYPE="foreign"
+              FIELDS="id_prodi"
+              REFTABLE="local_obe_prodi"
+              REFFIELDS="id"/>
+
+              <KEY NAME="fk_skala_tahun"
+              TYPE="foreign"
+              FIELDS="id_tahun_akademik"
+              REFTABLE="local_obe_tahun_akademik"
+              REFFIELDS="id"/>
+
+       </KEYS>
+
+       <INDEXES>
+
+              <INDEX NAME="tipe_idx"
+                     UNIQUE="false"
+                     FIELDS="tipe_kompetensi"/>
+
+       </INDEXES>
+
+       </TABLE>
+       
+        
+
+
+        <!-- ===================================================== -->
+        <!-- TABLE: local_obe_audit_log -->
+        <!-- ===================================================== -->
+        <TABLE NAME="local_obe_audit_log" COMMENT="Audit log perubahan konfigurasi dan data OBE">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+                <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+                <FIELD NAME="action" TYPE="char" LENGTH="80" NOTNULL="true"/>
+                <FIELD NAME="entity" TYPE="char" LENGTH="80" NOTNULL="true"/>
+                <FIELD NAME="entityid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+                <FIELD NAME="details" TYPE="text" NOTNULL="false"/>
+                <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+            </KEYS>
+            <INDEXES>
+                <INDEX NAME="userid_idx" UNIQUE="false" FIELDS="userid"/>
+                <INDEX NAME="entity_idx" UNIQUE="false" FIELDS="entity, entityid"/>
+                <INDEX NAME="timecreated_idx" UNIQUE="false" FIELDS="timecreated"/>
+            </INDEXES>
+        </TABLE>
+
+    </TABLES>
+</XMLDB>
