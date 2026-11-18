@@ -46,7 +46,13 @@ class kompetensi_controller {
         }
         
         $tahun_akademik = $SESSION->obe_id_tahun_akademik ?? 0;
-        kompetensi_manager::sync_competencies($prodi_id, $tahun_akademik);
+        if (!kompetensi_manager::sync_competencies($prodi_id, $tahun_akademik)) {
+            redirect(new \moodle_url('/local/obe/views/admin/dashboard.php', ['halaman'=>'kelola_framework','filter_prodi'=>$prodi_id]),
+                'Kerangka kompetensi belum dihubungkan untuk prodi dan tahun ini. Hubungkan kerangka terlebih dahulu.', null, \core\output\notification::NOTIFY_WARNING);
+        }
+        global $DB;
+        $synced=$DB->count_records('local_obe_kompetensi',['id_prodi'=>$prodi_id,'id_tahun_akademik'=>$tahun_akademik]);
+        if (!$synced) {redirect(new \moodle_url('/local/obe/views/admin/dashboard.php',['halaman'=>'kelola_framework','filter_prodi'=>$prodi_id]),'Kerangka belum memiliki struktur kompetensi. Minta pengelola melengkapinya lalu sinkronkan kembali.',null,\core\output\notification::NOTIFY_WARNING);}
         \local_obe\access_guard::audit('sync', 'kompetensi', $prodi_id, ['tahun_akademik' => $tahun_akademik]);
         
         redirect(new \moodle_url('/local/obe/views/admin/dashboard.php', [

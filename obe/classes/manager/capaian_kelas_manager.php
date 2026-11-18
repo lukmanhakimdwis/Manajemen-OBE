@@ -504,10 +504,7 @@ class capaian_kelas_manager {
             // =====================================================
             // AMBIL MAPPING AKTIVITAS
             // =====================================================
-            $maps = $DB->get_records(
-                'local_obe_aktivitas_map',
-                ['sub_cpmk_id' => $sub_cpmk_id]
-            );
+            $maps = \local_obe\local\assessment_integrity::maps((int)$courseid,(int)$sub_cpmk_id);
 
             $activities = [];
 
@@ -515,7 +512,7 @@ class capaian_kelas_manager {
 
                 $cm = $cms[$map->cmid] ?? null;
 
-                if (!$cm || !empty($cm->deletioninprogress)) {
+                if (!$cm) {
                     continue;
                 }
 
@@ -824,30 +821,9 @@ class capaian_kelas_manager {
         return $hasil;
     }
     public static function ambil_bobot_relasi($asal_id, $tujuan_id, $id_tahun_akademik = 0) {
-            global $DB, $SESSION;
-            $dbman = $DB->get_manager();
-            
-            if (!$dbman->table_exists('local_obe_bobot_relasi')) {
-                return 0.00;
-            }
-
-            if (empty($id_tahun_akademik)) {
-                $id_tahun_akademik = $SESSION->obe_id_tahun_akademik ?? 0;
-            }
-            $relasi = $DB->get_record('local_obe_bobot_relasi', [
-                'id_kompetensi_asal'   => $asal_id,
-                'id_kompetensi_tujuan' => $tujuan_id,
-                'id_tahun_akademik'    => $id_tahun_akademik
-            ], 'nilai_bobot', IGNORE_MISSING);
-
-            if (!$relasi) {
-                $relasi = $DB->get_record('local_obe_bobot_relasi', [
-                    'id_kompetensi_asal'   => $tujuan_id,
-                    'id_kompetensi_tujuan' => $asal_id,
-                    'id_tahun_akademik'    => $id_tahun_akademik
-                ], 'nilai_bobot', IGNORE_MISSING);
-            }
-            return $relasi && isset($relasi->nilai_bobot) ? floatval($relasi->nilai_bobot) : 0.00;
+        global $SESSION;
+        $year=(int)($id_tahun_akademik?:($SESSION->obe_id_tahun_akademik??0));
+        return \local_obe\local\assessment_integrity::relation_weight((int)$asal_id,(int)$tujuan_id,$year);
     }
     
     /**

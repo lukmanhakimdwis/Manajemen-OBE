@@ -2,6 +2,7 @@
 namespace local_obe;
 
 defined('MOODLE_INTERNAL') || die();
+require_once(__DIR__.'/../fixtures/ai_fixture.php');
 
 global $CFG;
 require_once($CFG->dirroot . '/local/obe/classes/manager/aktivitasnilai_manager.php');
@@ -11,61 +12,17 @@ use stdClass;
 use local_obe\manager\aktivitasnilai_manager;
 
 class aktivitasnilai_manager_test extends advanced_testcase {
+    use \local_obe\tests\ai_fixture;
 
     /**
      * Helper untuk mempersiapkan lingkungan data dasar kurikulum OBE.
      */
     private function buat_lingkungan_kurikulum() {
-        global $DB;
-
-        // 1. Setup Prodi & Tahun Akademik
-        $prodi = new stdClass();
-        $prodi->kode_prodi = 'TRPL';
-        $prodi->nama_prodi = 'Teknologi Rekayasa Perangkat Lunak';
-        $idprodi = $DB->insert_record('local_obe_prodi', $prodi);
-
-        $tahun = new stdClass();
-        $tahun->nama_tahun = '2025/2026';
-        $tahun->status_aktif = 1;
-        $idtahun = $DB->insert_record('local_obe_tahun_akademik', $tahun);
-
-        // 2. Setup Kompetensi Tipe SUB-CPMK
-        $subcpmk = new stdClass();
-        $subcpmk->id_prodi = $idprodi;
-        $subcpmk->id_tahun_akademik = $idtahun;
-        $subcpmk->nama_kompetensi = 'SUB-1';
-        $subcpmk->tipe = 'SUB-CPMK';
-        $subcpmk->parent_id = 1;
-        $idsubcpmk = $DB->insert_record('local_obe_kompetensi', $subcpmk);
-
-        // 3. Setup Mata Kuliah & Kursus Moodle Riil
-        $mk = new stdClass();
-        $mk->id_prodi = $idprodi;
-        $mk->kode_mk = 'MK005';
-        $mk->nama_mk = 'Pemrograman Lanjut';
-        $mk->sks_mk = 3;
-        $idmk = $DB->insert_record('local_obe_mata_kuliah', $mk);
-
-        $course = $this->getDataGenerator()->create_course();
-
-        // 4. Hubungkan ke Relasi Kelas
-        $relasi = new stdClass();
-        $relasi->id_mata_kuliah = $idmk;
-        $relasi->id_kursus_moodle = $course->id;
-        $relasi->id_angkatan = 2026;
-        $relasi->id_tahun_akademik = $idtahun;
-        $DB->insert_record('local_obe_relasi_kelas', $relasi);
-
-        // 5. Buat Modul Tiruan Moodle (Assignment) untuk mendapatkan Course Module ID (cmid) riil
-        $assign = $this->getDataGenerator()->create_module('assign', ['course' => $course->id]);
-
-        return [
-            'prodi'    => $idprodi,
-            'tahun'    => $idtahun,
-            'subcpmk'  => $idsubcpmk,
-            'courseid' => $course->id,
-            'cmid'     => $assign->cmid
-        ];
+        global $DB;$this->preventResetByRollback();$e=$this->environment('SUB-1');
+        $id=$DB->get_field('local_obe_aktivitas_map','id',['cmid'=>$e['activity']->cmid],MUST_EXIST);
+        aktivitasnilai_manager::delete($id);
+        $assign=$this->getDataGenerator()->create_module('assign',['course'=>$e['course']->id]);
+        return ['prodi'=>$e['prodi'],'tahun'=>$e['year'],'subcpmk'=>$e['ids']['SUB-CPMK'],'courseid'=>$e['course']->id,'cmid'=>$assign->cmid];
     }
 
     /**
@@ -77,12 +34,8 @@ class aktivitasnilai_manager_test extends advanced_testcase {
         global $DB;
 
         // Meredam output deprecated dynamic properties bawaan core Moodle
-        $this->setOutputCallback(function() {});
 
-        // Mock class audit/access_guard agar tidak memicu error class not found jika belum lengkap
-        if (!class_exists('\\local_obe\\access_guard')) {
-            eval('namespace local_obe; class access_guard { public static function audit($a,$b,$c,$d){} }');
-        }
+
 
         $env = $this->buat_lingkungan_kurikulum();
 
@@ -97,7 +50,9 @@ class aktivitasnilai_manager_test extends advanced_testcase {
         // 2. Uji READ (Ambil Semua & Ambil Satu)
         $semua = aktivitasnilai_manager::ambil_semua_pemetaan($env['courseid']);
         $this->assertNotEmpty($semua);
-        $this->assertEquals('SUB-1', $semua[0]->nama_sub_cpmk);
+        $matched=array_values(array_filter($semua,static fn($row)=>(int)$row->cmid===(int)$env['cmid']));
+        $this->assertCount(1,$matched);
+        $this->assertEquals('SUB-1', $matched[0]->nama_sub_cpmk);
 
         $satu = aktivitasnilai_manager::ambil_satu_pemetaan($mapid);
         $this->assertEquals($env['cmid'], $satu->cmid);
@@ -121,7 +76,7 @@ class aktivitasnilai_manager_test extends advanced_testcase {
         $this->setAdminUser();
         
         // Meredam output deprecated dynamic properties bawaan core Moodle
-        $this->setOutputCallback(function() {});
+
         
         $env = $this->buat_lingkungan_kurikulum();
 
@@ -151,7 +106,7 @@ class aktivitasnilai_manager_test extends advanced_testcase {
         global $DB;
         
         // Meredam output deprecated dynamic properties bawaan core Moodle
-        $this->setOutputCallback(function() {});
+
         
         $env = $this->buat_lingkungan_kurikulum();
 
@@ -179,7 +134,7 @@ class aktivitasnilai_manager_test extends advanced_testcase {
         global $DB;
         
         // Meredam output deprecated dynamic properties bawaan core Moodle
-        $this->setOutputCallback(function() {});
+
         
         $env = $this->buat_lingkungan_kurikulum();
 

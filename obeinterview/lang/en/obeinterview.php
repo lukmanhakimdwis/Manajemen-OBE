@@ -1,0 +1,45 @@
+<?php
+$string['pluginname']='Wawancara OBE AI';
+$string['modulename']='Wawancara OBE AI';
+$string['modulenameplural']='Wawancara OBE AI';
+$string['modulename_help']='Wawancara teks dengan bukti yang disahkan dosen. Petakan aktivitas ke Sub-CPMK melalui Pemetaan Aktivitas Nilai OBE.';
+$string['pluginadministration']='Pengaturan wawancara OBE';
+$string['obeinterview:addinstance']='Menambahkan wawancara OBE';
+$string['obeinterview:view']='Melihat wawancara';
+$string['obeinterview:attempt']='Mengikuti wawancara sendiri';
+$string['obeinterview:grade']='Mengesahkan nilai wawancara';
+$string['name']='Nama wawancara';
+$string['focusid']='Fokus kompetensi OBE';
+$string['rubricjson']='Rubrik JSON (bobot kriteria berjumlah 1)';
+$string['corequestion']='Pertanyaan inti';
+$string['duration']='Durasi dalam detik (60–3600)';
+$string['maxfollow']='Maksimum pertanyaan lanjutan (0–5)';
+$string['retentiondays']='Masa simpan isi bukti dalam hari (1–3650)';
+$string['projectcmid']='CMID proyek terkait (0 jika tanpa proyek)';
+$string['privacy:metadata']='Konfigurasi aktivitas memuat ID dosen pembuat; percakapan dan penilaian disimpan oleh local_obe.';
+
+// Teacher review and accessible numeric score form.
+$string['review_signed']='Nilai disahkan';
+$string['review_insufficient']='Bukti belum cukup';
+$string['review_pending']='Menunggu pengesahan';
+$string['review_expired']='Masa simpan berakhir';
+$string['review_active']='Sedang berlangsung';
+$string['review_finished']='Wawancara selesai';
+$string['review_timedout']='Durasi wawancara berakhir';
+$string['review_unanalysed']='Belum dianalisis';
+$string['review_no_score']='Belum ada usulan skor';
+$string['review_incomplete_preview']='Lengkapi skor wajib untuk melihat nilai';
+$string['review_approve']='Sahkan nilai ke Gradebook';
+$string['review_correct']='Simpan koreksi nilai';
+$string['review_score_required']='Isi skor untuk kriteria wajib ini.';
+$string['review_score_range']='Gunakan angka antara 0 dan 100.';
+$string['review_unknown_score']='Ada kriteria yang tidak dikenal. Muat ulang halaman sebelum menyimpan.';
+$string['review_reason_error']='Alasan wajib diisi. Jika terlalu panjang, ringkas lalu simpan kembali.';
+$string['review_student_answer']='Jawaban mahasiswa';
+$string['review_question']='Pertanyaan wawancara';
+$string['review_save_failed']='Nilai belum disimpan. Periksa isian skor dan alasan. Jika revisi berubah, muat ulang usulan; jika Gradebook terkunci atau diubah manual, minta pengelola nilai memeriksanya. Isian Anda tetap ditampilkan.';
+$string['review_saved']='Server mengonfirmasi nilai wawancara {$a}/100 tersimpan di Gradebook.';
+$string['review_analysed']='Analisis tersimpan. Periksa kutipan dan skor sebelum mengesahkan nilai.';
+$string['review_reopened']='Wawancara telah dibuka kembali. Transkrip dan riwayat nilai tetap tersimpan.';
+$string['review_stale']='Usulan telah berubah sejak formulir dibuka. Salin isian Anda bila perlu, lalu muat ulang halaman dan periksa revisi terbaru sebelum menyimpan.';
+$string['review_simulation']='Mode simulasi. Nilai masuk ke Gradebook setelah Anda mengesahkannya.';

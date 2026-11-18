@@ -1,38 +1,52 @@
-# Manajemen OBE untuk Moodle
+# Manajemen OBE dan Wawancara AI untuk Moodle
 
-Sumber plugin berada di `obe/`. Paket pemasangan `obe.zip` dihasilkan dari sumber tersebut dengan `python3 tools/build_zip.py`; jangan mengedit ZIP secara terpisah. Paket tidak menyertakan metadata Git.
+Sumber terbaru pilot OBE berbahasa Indonesia:
+
+| Plugin | Sumber | Paket | Lokasi pemasangan Moodle |
+|---|---|---|---|
+| Manajemen OBE (`local_obe`, 1.1.0-ai-pilot) | `obe/` | `obe.zip` | `local/obe` |
+| Wawancara AI (`mod_obeinterview`, 0.1.0-pilot) | `obeinterview/` | `obeinterview.zip` | `mod/obeinterview` |
+
+Keduanya berstatus pilot/alpha, versi internal `2026111502`. Wawancara AI bergantung pada `local_obe`. Runtime pengujian staging: Moodle 4.5.16, PHP 8.3.36, PostgreSQL 16.16. Dukungan seluruh versi sejak minimum deklaratif Moodle 4.1 belum diuji.
+
+## Fitur dan integritas penilaian
+
+- Struktur CPL → Indikator Ketercapaian CPL → CPMK → Sub-CPMK → aktivitas/bukti, dengan bobot persen dan penelusuran bukti.
+- Penghapusan/perubahan biasa aspek yang sudah memiliki nilai, termasuk nol, atau riwayat keputusan ditolak. Penggantian mempertahankan jejak historis dan mencegah bobot aktif ganda. Batas jalur penghapusan bawaan Moodle tetap perlu diperhatikan sesuai implementasi plugin.
+- Wawancara teks menyimpan giliran, kutipan per kriteria, proposal, dan keputusan dosen. Nol berbeda dari bukti belum cukup (`null`). Proposal terbaru tidak menimpa keputusan lama atau Gradebook sebelum disahkan.
+- Penyedia simulasi memilih kutipan sesuai kriteria; integrasi Codex nyata tidak dinyatakan terverifikasi oleh rilis ini. Akses provider resmi, kredensial backend, dan izin penggunaan harus dikonfigurasi institusi.
+- Scope/capability membatasi akses mahasiswa, dosen, dan pengelola. Lab Pemrograman masih ditunda.
 
 ## Instalasi dan upgrade
 
-Pasang direktori `obe` ke `local/obe` pada Moodle, lalu jalankan `php admin/cli/upgrade.php --non-interactive` dari root Moodle. Rilis 1.0.3 menggunakan versi plugin `2026111501`.
-
-Upgrade memeriksa duplikat course pada relasi kelas dan duplikat cmid pada pemetaan aktivitas sebelum memasang unique index. Jika ditemukan duplikat, upgrade berhenti dengan pesan rekonsiliasi; data tidak dihapus otomatis. Selesaikan konflik pemetaan dan simpan riwayat akademiknya sebelum mengulang upgrade.
-
-## Aturan laporan yang diperbaiki
-
-- Status kompeten selalu mengikuti skala prodi, tahun akademik, dan tipe kompetensi.
-- Semua tingkatan memakai jumlah kontribusi `nilai × bobot / 100`. Bobot parsial tidak dinormalisasi menjadi 100%; sisa bobot tetap terlihat pada konfigurasi.
-- MK/kelas tanpa pemetaan aktivitas ke kompetensi target tidak dimasukkan sebagai nilai nol pada rata-rata lintas MK.
-- Populasi laporan kelas adalah mahasiswa aktif dengan role berarchetype student, termasuk role turunan; dosen nonediting dan enrolmen suspended dikecualikan.
-- Untuk mahasiswa yang mengikuti beberapa kelas MK pada tahun yang sama, kelas dengan ID course paling tinggi dipilih secara konsisten. Ini adalah aturan deterministik sementara untuk pengambilan ulang; ID terbesar tidak menjamin tanggal pengambilan terbaru. Sesuaikan aturan ini secara terpusat jika institusi memakai nilai terbaik atau tanggal percobaan akademik.
-- Bobot aktivitas selalu persen 0–100, termasuk nilai 0,5% dan 1%. Tidak ada deteksi unit berdasarkan besar nilainya.
-- Skala memakai batas inklusif dua desimal persis seperti konfigurasi; tidak menambahkan 0,99 ke maksimum.
-- Ekspor kelas menggunakan tahun akademik relasi course, bukan session tab lain.
-- Sinkronisasi menghapus kompetensi lokal yang hilang dari sumber hanya jika tidak dirujuk. Jika masih dirujuk bobot/aktivitas, transaksi dibatalkan agar riwayat tidak rusak. Arsipkan kurikulum historis atau selesaikan referensinya sebelum sinkronisasi.
-- Master yang masih dirujuk tidak dapat dihapus melalui service penyimpanan. Pengaturan ambang lama mengarahkan pengguna ke skala nilai melalui pesan migrasi yang eksplisit.
-
-## Perbaikan keamanan
-
-Ekspor membutuhkan capability laporan dan scope prodi yang sah; ekspor individual pada endpoint administratif tidak tersedia untuk akun mahasiswa biasa. Penghapusan mapping memeriksa course sebenarnya dari module. Mutasi master MK/angkatan membutuhkan capability tulis dan pemeriksaan record lama serta prodi tujuan. Nama dinamis tidak lagi dimasukkan ke handler konfirmasi JavaScript. Laporan untuk pengguna tanpa hak melihat nilai hidden ditolak jika melibatkan nilai hidden, sehingga nilai juga tidak bocor lewat agregat.
-
-## Pengujian
-
-Dari root Moodle yang telah diinisialisasi untuk PHPUnit:
+Backup database dan moodledata sebelum upgrade. Pasang kedua direktori plugin pada lokasi di atas, lalu dari root Moodle:
 
 ```sh
-php -d max_input_vars=5000 -d memory_limit=512M vendor/bin/phpunit --testsuite local_obe_testsuite
+php admin/cli/upgrade.php --non-interactive
+php admin/cli/purge_caches.php
 ```
 
-`tests/fixes_test.php` berisi regresi untuk temuan audit. Tes lama disesuaikan dengan autentikasi mutasi, exception yang benar, input array untuk tambah relasi massal, dan fixture course/module nyata. Validasi dilakukan pada Moodle 4.5.16, PHP 8.3.36, PostgreSQL 16.16; matriks seluruh versi Moodle sejak minimum 4.1 belum dijalankan.
+Upgrade memeriksa duplikat pemetaan sebelum unique index. Konflik harus direkonsiliasi dengan mempertahankan riwayat; jangan menghapus nilai atau melakukan pembersihan massal untuk melewati pemeriksaan. Konfigurasi kurikulum, skala, bobot dan provider dilakukan lewat plugin. RPS, CPL dan indikator institusi harus diverifikasi; data/ambang demo tidak menjadi kebijakan akademik resmi.
 
-Hasil validasi rilis: 97 tes, 226 assertions, seluruhnya lulus; lint seluruh PHP lulus; upgrade CLI berhasil dan kedua unique index terverifikasi. Pengujian HTTP lokal juga memastikan tiga ekspor administratif menolak akun biasa, mutasi lintas prodi tidak mengubah record, mapping course lain tetap ada, nilai hidden ditolak, dan input nama berisi ekspresi JavaScript tidak masuk ke event handler. Login admin serta dashboard tetap berhasil. Seluruh pengujian menggunakan data buatan yang dibersihkan setelah pemeriksaan.
+Bangun ulang kedua ZIP setelah perubahan sumber:
+
+```sh
+python3 tools/build_zip.py
+```
+
+Paket tidak memuat kredensial, database, moodledata, konfigurasi rahasia, atau log staging. Catatan versi sebelumnya tersimpan di [docs/README-1.0.3.md](docs/README-1.0.3.md).
+
+## Status pengujian, 18 November 2026
+
+- 153 tes lokal Python pada workspace staging lulus; hasil ini bukan PHPUnit Moodle.
+- Runtime terakhir yang dilaporkan operator: 34 dari 35 kelompok PHPUnit, seluruh 4 fixture PHP, dan verifikasi dataset lulus.
+- Satu kegagalan tersisa pada fixture form tambah/edit telah dipatch: constructor menerima nomor section, ID record section dipakai hanya untuk lookup, dan global COURSE diselaraskan dengan PAGE. Assertion PAGE, hak akses, serta callback penyimpanan dipertahankan.
+- Lint PHP dan PHPUnit Moodle untuk patch form terakhir belum dijalankan ulang karena akses Docker sesi pengembangan diblokir. Rilis ini tidak mengklaim 35/35 kelompok telah lulus.
+
+Contoh eksekusi kelompok terdampak setelah inisialisasi PHPUnit Moodle pada database pengujian terpisah:
+
+```sh
+php -d max_input_vars=5000 -d memory_limit=512M vendor/bin/phpunit local/obe/tests/ai_mod_form_test.php
+```
+
+Jalankan juga seluruh tes `local/obe/tests` dan `mod/obeinterview/tests` serta pemeriksaan Gradebook/OBE sebelum pemakaian produksi. Repository ini memuat sumber dan paket plugin; orkestrasi VPS, dataset RPS, worker, dan rahasia deployment tidak disertakan dalam pembaruan plugin ini.

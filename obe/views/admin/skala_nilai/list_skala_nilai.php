@@ -162,11 +162,11 @@ $list_tipe_wajib = ['CPL', 'INDIKATOR', 'CPMK', 'SUB-CPMK'];
                                         <td>
                                             <?php if (isset($d->status_kompeten) && $d->status_kompeten == 1): ?>
                                                 <span class="badge badge-success px-2.5 py-1 font-weight-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">
-                                                    <i class="fa fa-check mr-1"></i>KOMPETEN
+                                                    <i class="fa fa-check mr-1"></i>Kompeten
                                                 </span>
                                             <?php else: ?>
                                                 <span class="badge badge-light border text-muted px-2.5 py-1 font-weight-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">
-                                                    <i class="fa fa-times text-danger mr-1"></i>BELUM
+                                                    <i class="fa fa-times text-danger mr-1"></i>Belum Kompeten
                                                 </span>
                                             <?php endif; ?>
                                         </td>

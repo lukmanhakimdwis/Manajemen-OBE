@@ -141,6 +141,7 @@ if ($is_mahasiswa_mode) {
 }
 ?>
 
+<div class="obe-subreport"><p class="alert alert-info">Capaian Sub-CPMK dihitung dari aktivitas terpetakan. Total kursus mengikuti pengaturan Gradebook Moodle. Bobot kriteria rubrik menentukan nilai setiap aktivitas.</p>
 <div class="card mb-4 shadow-sm border-0">
     <div class="card-header bg-white py-3">
         <div class="d-flex justify-content-between align-items-center">
@@ -195,15 +196,16 @@ if ($is_mahasiswa_mode) {
 
 <div class="card shadow-sm mb-4 border-0">
     <div class="table-responsive bg-white rounded p-3">
-        <table class="table table-hover align-middle mb-0">
+        <table class="table table-hover align-middle mb-0 obe-student-report">
+            <caption class="sr-only">Rincian nilai aktivitas dan capaian Sub-CPMK per mahasiswa</caption>
             <thead class="thead-light">
                 <tr class="text-uppercase small text-center" style="letter-spacing: 0.5px;">
-                    <th class="text-left py-3 pl-4" style="width: 20%;">Nama Mahasiswa</th>
-                    <th class="text-left py-3" style="width: 35%;">Rincian Komponen Aktivitas</th>
-                    <th class="py-3" style="width: 12%;">Nilai Sub CPMK</th>
-                    <th class="py-3" style="width: 15%;">Kontribusi CPMK</th>
-                    <th class="py-3" style="width: 8%;">Grade</th>
-                    <th class="py-3" style="width: 13%;">Status Kelulusan</th>
+                    <th scope="col" class="text-left py-3 pl-4">Nama Mahasiswa</th>
+                    <th scope="col" class="text-left py-3">Rincian Komponen Aktivitas</th>
+                    <th scope="col" class="py-3">Nilai Sub CPMK</th>
+                    <th scope="col" class="py-3">Kontribusi CPMK</th>
+                    <th scope="col" class="py-3">Grade</th>
+                    <th scope="col" class="py-3">Status Kelulusan</th>
                 </tr>
             </thead>
             <tbody>
@@ -225,71 +227,56 @@ if ($is_mahasiswa_mode) {
                             case 'D': case 'E': case 'K':    $badge_class = 'danger'; break;
                         }
                         ?>
-                        <tr class="text-center">
-                            <td class="text-left pl-4 py-3">
+                        <tr class="text-center obe-student-row">
+                            <td class="text-left pl-4 py-3 obe-student-name" data-label="Mahasiswa">
                                 <div class="font-weight-bold text-dark">
                                     <?= s($user->nama) ?>
                                 </div>
                                 <div class="text-muted small">
                                     <i class="fa fa-user mr-1"></i>
                                     <?= s($user->username) ?>
+                                    <?php $ready=\local_obe\local\ux::grade_readiness((int)$courseid,(int)$sub_cpmk_id,(int)$user->userid); ?>
+                                    <?php if (!$ready['complete']): ?><p class="alert alert-warning"><strong>Nilai belum lengkap — capaian sementara.</strong> Belum dinilai: <?= s(implode(', ',$ready['missing'])) ?>. Nilai kosong mengikuti perhitungan lama; angka nol belum tentu merupakan skor yang sudah diberikan.</p><?php endif; ?>
                                 </div>
                             </td>
-                            <td class="text-left py-3">
+                            <td class="text-left py-3 obe-activity-cell" data-label="Rincian aktivitas">
                                 <?php if (empty($user->rincian_list)): ?>
                                     <small class="text-muted"><i class="fa fa-info-circle mr-1"></i> Tidak ada aktivitas pendukung.</small>
                                 <?php else: ?>
                                     <?php foreach ($user->rincian_list as $r): ?>
-                                        <div class="mb-3 pb-2 border-bottom text-dark" style="font-size: 0.9rem;">
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <div>
-                                                    <i class="fa fa-caret-right text-info mr-2"></i>
-                                                    <span class="text-capitalize font-weight-bold text-dark mr-1"><?= s($r->nama_aktivitas ?? '') ?></span>
-                                                    <span class="badge badge-light border text-dark font-weight-bold px-2 py-1" style="font-size: 10px;">
-                                                        <?= ucfirst($r->modulename) ?>
-                                                    </span>
-                                                </div>
-                                                <div class="text-dark font-weight-bold small">
-                                                    Bobot: <?= $format_angka($r->bobot_aktivitas) ?>%
-                                                </div>
+                                        <section class="obe-activity-detail">
+                                            <div class="obe-activity-heading">
+                                                <strong><?= s($r->nama_aktivitas ?? '') ?></strong>
+                                                <span class="badge badge-light border"><?= s(ucfirst($r->modulename)) ?></span>
                                             </div>
-                                            
-                                            <div class="row bg-light rounded m-0 p-2 text-center" style="font-size: 0.8rem; border: 1px solid #e3e6f0;">
-                                                <div class="col-4 border-right" style="border-right-color: #e3e6f0 !important;">
-                                                    <span class="text-dark font-weight-bold d-block mb-1" style="font-size: 10px;">Nilai Aktivitas</span>
-                                                    <span class="text-primary font-weight-bold" style="font-size: 0.95rem;"><?= $format_angka($r->skor, 1) ?></span>
-                                                </div>
-                                                <div class="col-4 border-right" style="border-right-color: #e3e6f0 !important;">
-                                                    <span class="text-dark font-weight-bold d-block mb-1" style="font-size: 10px;">Skor Maksimal</span>
-                                                    <span class="text-dark font-weight-bold" style="font-size: 0.95rem;"><?= $format_angka($r->max, 0) ?></span>
-                                                </div>
-                                                <div class="col-4">
-                                                    <span class="text-dark font-weight-bold d-block mb-1" style="font-size: 10px;">Kontribusi Subcpmk</span>
-                                                    <span class="text-success font-weight-bold" style="font-size: 0.95rem;"><?= $format_angka($r->nilai_terbobot) ?></span>
-                                                </div>
-                                            </div>
-                                        </div>
+                                            <dl class="obe-activity-metrics">
+                                                <div><dt>Nilai aktivitas</dt><dd><span class="obe-number"><?= $format_angka($r->skor, 1) ?>/<?= $format_angka($r->max, 0) ?></span></dd></div>
+                                                <div><dt>Skor maksimum</dt><dd><span class="obe-number"><?= $format_angka($r->max, 0) ?></span></dd></div>
+                                                <div><dt>Bobot terhadap Sub-CPMK</dt><dd><span class="obe-number"><?= $format_angka($r->bobot_aktivitas) ?>%</span></dd></div>
+                                                <div><dt>Kontribusi Sub-CPMK</dt><dd><strong class="obe-number"><?= $format_angka($r->nilai_terbobot) ?> poin</strong></dd></div>
+                                            </dl>
+                                        </section>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </td>
-                            <td class="text-center py-3">
+                            <td class="text-center py-3 obe-summary-cell" data-label="Nilai Sub-CPMK">
                                 <h5 class="text-primary font-weight-bold mb-0">
-                                    <?= $format_angka($user->total_nilai_obe) ?>
+                                    <span class="obe-number"><?= $format_angka($user->total_nilai_obe) ?>/100</span>
                                 </h5>
                                 
                             </td>
-                            <td class="text-center py-3">
+                            <td class="text-center py-3 obe-summary-cell" data-label="Kontribusi CPMK">
                                 <h5 class="text-success font-weight-bold mb-1">
-                                    <?= $format_angka($user->kontribusi_cpmk) ?>
+                                    <span class="obe-number"><?= $format_angka($user->kontribusi_cpmk) ?></span>
                                 </h5>
                                 
                             </td>
-                            <td class="text-center py-3">
+                            <td class="text-center py-3 obe-summary-cell" data-label="Grade">
                                 <span class="badge badge-<?= $badge_class ?> px-3 py-2" style="font-size: 0.85rem; font-weight: 600; min-width: 45px;">
                                     <?= s($user->grade) ?>
                                 </span>
                             </td>
-                            <td class="text-center py-3">
+                            <td class="text-center py-3 obe-summary-cell" data-label="Status kelulusan">
                                 <?php if ($user->kompeten): ?>
                                     <span class="badge badge-success px-3 py-2 font-weight-bold" style="font-size: 0.82rem; letter-spacing: 0.3px;">
                                         <i class="fa fa-check-circle mr-1"></i> KOMPETEN
@@ -307,3 +294,4 @@ if ($is_mahasiswa_mode) {
         </table>
     </div>
 </div>
+</div><!-- .obe-subreport -->

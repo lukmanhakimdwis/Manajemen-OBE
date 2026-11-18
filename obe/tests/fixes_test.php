@@ -15,7 +15,7 @@ use local_obe\manager\angkatan_manager;
 use local_obe\manager\prodiframework_manager;
 
 final class fixes_test extends advanced_testcase {
-    private function fixture(float $score = 80): object {
+    private function fixture(?float $score = 80,float $subweight=100): object {
         global $DB, $CFG;
         require_once($CFG->libdir . '/gradelib.php');
         $this->setAdminUser();
@@ -34,28 +34,27 @@ final class fixes_test extends advanced_testcase {
         $relasi = $DB->insert_record('local_obe_relasi_kelas', (object)[
             'id_mata_kuliah' => $mk, 'id_kursus_moodle' => $course->id,
             'id_angkatan' => $a, 'id_tahun_akademik' => $y]);
-        $parent = 0;
-        $nodes = [];
-        foreach (['CPL', 'INDIKATOR', 'CPMK', 'SUB-CPMK'] as $type) {
-            $id = $DB->insert_record('local_obe_kompetensi', (object)[
-                'id_prodi' => $p, 'id_tahun_akademik' => $y, 'parent_id' => $parent,
-                'nama_kompetensi' => 'Audit ' . $type, 'tipe' => $type]);
-            if ($parent) {
-                bobot_relasi_manager::save_bobot($id, 100, $y);
-            }
-            $nodes[$type] = $id;
-            $parent = $id;
+        set_config('enabled',1,'core_competency');
+        $cg=$g->get_plugin_generator('core_competency');$fw=$cg->create_framework();
+        prodiframework_manager::simpan((object)['id_prodi'=>$p,'frameworkid'=>$fw->get('id'),'id_tahun_akademik'=>$y]);
+        $parent=0;
+        foreach (['CPL','INDIKATOR','CPMK','SUB-CPMK'] as $type) {
+            $node=$cg->create_competency(['competencyframeworkid'=>$fw->get('id'),'parentid'=>$parent,'shortname'=>'Audit '.$type]);$parent=$node->get('id');
+        }
+        kompetensi_manager::sync_competencies($p,$y);$nodes=[];
+        foreach ($DB->get_records('local_obe_kompetensi',['id_prodi'=>$p,'id_tahun_akademik'=>$y]) as $node) {
+            $nodes[$node->tipe]=$node->id;
+            if ($node->parent_id) {bobot_relasi_manager::save_bobot($node->id,$node->tipe==='SUB-CPMK'?$subweight:100,$y);}
             foreach ([['D', 0, 59.99, 0], ['C', 60, 79.99, 1], ['A', 80, 100, 1]] as $band) {
-                skala_nilai_manager::tambah((object)[
-                    'id_prodi' => $p, 'id_tahun_akademik' => $y, 'tipe_kompetensi' => $type,
-                    'huruf_nilai' => $band[0], 'nilai_min' => $band[1], 'nilai_max' => $band[2],
-                    'status_kompeten' => $band[3]]);
+                skala_nilai_manager::tambah((object)['id_prodi'=>$p,'id_tahun_akademik'=>$y,'tipe_kompetensi'=>$node->tipe,
+                    'huruf_nilai'=>$band[0],'nilai_min'=>$band[1],'nilai_max'=>$band[2],'status_kompeten'=>$band[3]]);
             }
         }
+        $parent=$nodes['SUB-CPMK'];
         $assign = $g->create_module('assign', ['course' => $course->id, 'grade' => 100]);
-        grade_update('mod/assign', $course->id, 'mod', 'assign', $assign->id, 0,
+        if ($score!==null) {grade_update('mod/assign', $course->id, 'mod', 'assign', $assign->id, 0,
             ['userid' => $student->id, 'rawgrade' => $score],
-            ['itemname' => $assign->name, 'grademax' => 100, 'grademin' => 0]);
+            ['itemname' => $assign->name, 'grademax' => 100, 'grademin' => 0]);}
         $mapping = $DB->insert_record('local_obe_aktivitas_map', (object)[
             'cmid' => $assign->cmid, 'sub_cpmk_id' => $parent, 'bobot_aktivitas' => 100]);
         return (object)compact('p', 'y', 'a', 'mk', 'course', 'student', 'nodes', 'assign', 'mapping', 'relasi');
@@ -105,8 +104,7 @@ final class fixes_test extends advanced_testcase {
 
     public function test_partial_weights_are_consistent_across_reports(): void {
         $this->resetAfterTest(true);
-        $f = $this->fixture(80);
-        bobot_relasi_manager::save_bobot($f->nodes['SUB-CPMK'], 50, $f->y);
+        $f = $this->fixture(80,50); // Set the intended weight before any grade/history exists.
         $class = capaian_kelas_manager::ambil_detail_kompetensi_mahasiswa($f->course->id, $f->nodes['CPMK'], 'CPMK', $f->y);
         $student = capaian_mahasiswa_manager::ambil_detail_cpmk($f->student->id, $f->nodes['CPMK'], $f->p, $f->y);
         $this->assertEquals(40, $class->detail_mahasiswa[0]->nilai);
@@ -168,24 +166,41 @@ final class fixes_test extends advanced_testcase {
     public function test_one_percent_weight_is_preserved_on_resave(): void {
         global $DB, $SESSION, $USER;
         $this->resetAfterTest(true);
-        $f = $this->fixture(80);
+        // Ordinary editing is allowed only before the first recorded grade.
+        $f = $this->fixture(null);
         $DB->set_field('local_obe_aktivitas_map', 'bobot_aktivitas', 1, ['id' => $f->mapping]);
-        $before = capaian_kelas_manager::ambil_detail_kompetensi_mahasiswa($f->course->id, $f->nodes['SUB-CPMK'], 'SUB-CPMK', $f->y);
-        $this->assertEqualsWithDelta(0.8, $before->detail_mahasiswa[0]->nilai, 0.001);
         $SESSION->obe_id_tahun_akademik = $f->y;
-        $_GET = ['id' => $f->course->id, 'map_id' => $f->mapping];
-        ob_start();
-        global $CFG;
-        include($CFG->dirroot . '/local/obe/views/dosen/aktivitas_nilai/form_pemetaan.php');
-        $html = ob_get_clean();
-        preg_match('/name="bobot"[^>]*value="([^"]+)"/s', $html, $match);
-        $this->assertEquals('1', $match[1]);
-        $_GET = [];
-        $_POST = ['id' => $f->mapping, 'sub_cpmk_id' => $f->nodes['SUB-CPMK'], 'bobot' => $match[1]];
-        aktivitasnilai_controller::eksekusi_update($f->course->id);
-        $after = capaian_kelas_manager::ambil_detail_kompetensi_mahasiswa($f->course->id, $f->nodes['SUB-CPMK'], 'SUB-CPMK', $f->y);
-        $this->assertEquals(0.8, $after->detail_mahasiswa[0]->nilai);
-        $_POST = [];
+        $oldget=$_GET;$oldpost=$_POST;
+        try {
+            $_GET = ['id' => $f->course->id, 'map_id' => $f->mapping];
+            ob_start();
+            try {
+                global $CFG;
+                include($CFG->dirroot . '/local/obe/views/dosen/aktivitas_nilai/form_pemetaan.php');
+                $html = ob_get_contents();
+            } finally {ob_end_clean();}
+            $matched=preg_match('/name="bobot"[^>]*value="([^"]+)"/s', $html, $match);
+            $this->assertSame(1,$matched,'Editable mapping must render the weight input');
+            $this->assertEquals('1', $match[1]);
+            $_GET=[];
+            $_POST=['id'=>$f->mapping,'sub_cpmk_id'=>$f->nodes['SUB-CPMK'],'bobot'=>$match[1]];
+            aktivitasnilai_controller::eksekusi_update($f->course->id);
+            $this->assertEquals(1,$DB->get_field('local_obe_aktivitas_map','bobot_aktivitas',['id'=>$f->mapping],MUST_EXIST));
+            // Grade only AFTER resave. Both report reads must retain 80 * 1% = 0.8.
+            grade_update('mod/assign',$f->course->id,'mod','assign',$f->assign->id,0,
+                ['userid'=>$f->student->id,'rawgrade'=>80],['itemname'=>$f->assign->name,'grademax'=>100,'grademin'=>0]);
+            $before=capaian_kelas_manager::ambil_detail_kompetensi_mahasiswa($f->course->id,$f->nodes['SUB-CPMK'],'SUB-CPMK',$f->y);
+            $this->assertEqualsWithDelta(0.8, $before->detail_mahasiswa[0]->nilai, 0.001);
+            $after=capaian_kelas_manager::ambil_detail_kompetensi_mahasiswa($f->course->id,$f->nodes['SUB-CPMK'],'SUB-CPMK',$f->y);
+            $this->assertEquals(0.8, $after->detail_mahasiswa[0]->nilai);
+            // Once graded the same view must show protection, never an edit form.
+            $_POST=[];$_GET=['id'=>$f->course->id,'map_id'=>$f->mapping];
+            ob_start();
+            try {include($CFG->dirroot . '/local/obe/views/dosen/aktivitas_nilai/form_pemetaan.php');$locked=ob_get_contents();}
+            finally {ob_end_clean();}
+            $this->assertStringContainsString('Aspek sudah memiliki nilai',$locked);
+            $this->assertStringNotContainsString('name="bobot"',$locked);
+        } finally {$_GET=$oldget;$_POST=$oldpost;}
     }
 
     public function test_parallel_enrolments_use_latest_course_consistently(): void {

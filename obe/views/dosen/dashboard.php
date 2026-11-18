@@ -18,7 +18,7 @@ if ($courseid <= 0) {
 // =====================================================
 // VALIDASI COURSE
 // =====================================================
-list($course, $context) = \local_obe\access_guard::require_course_manage($courseid);
+list($course, $context) = \local_obe\access_guard::require_course_report($courseid);
 
 // =====================================================
 // AMBIL RELASI KELAS & SET SESSKEY TAHUN AKADEMIK
@@ -37,7 +37,8 @@ $PAGE->set_url(new moodle_url('/local/obe/views/dosen/dashboard.php', ['id' => $
 $PAGE->set_title('Manajemen OBE - ' . format_string($course->fullname));
 $PAGE->set_heading(format_string($course->fullname));
 
-// Capability local/obe:managecourse sudah divalidasi oleh access_guard.
+$canmanage=has_capability('local/obe:managecourse',$context);
+if ($halaman==='aktivitas_nilai') {require_capability('local/obe:managecourse',$context);}
 
 // =====================================================
 // VALIDASI KURSUS MOODLE SUDAH TERPETAKAN OLEH ADMIN
@@ -60,6 +61,7 @@ if ($halaman === 'aktivitas_nilai' && optional_param('aksi', '', PARAM_ALPHA) ==
 // OUTPUT BUFFERING UNTUK RENDERING KONTEN INTERNAL
 // =====================================================
 ob_start();
+echo \local_obe\local\ux::course_links($courseid);
 
 switch ($halaman) {
     // -------------------------------------------------
@@ -122,7 +124,19 @@ switch ($halaman) {
     // HALAMAN DEFAULT (LANDING BERANDA DOSEN)
     // -------------------------------------------------
     default:
-        echo "<div class='alert alert-info'>Selamat datang di Dashboard OBE Dosen</div>";
+        echo '<h2>OBE Kelas</h2><p>Siapkan aktivitas, periksa penilaian, lalu telusuri capaian pembelajaran.</p>';
+        echo \local_obe\local\ux::glossary();
+        if (!$relasi_kelas) {echo $OUTPUT->notification('Kelas belum terhubung dengan prodi dan tahun akademik. Minta administrator OBE menyiapkan relasi kelas.','warning');}
+        if ($canmanage) {echo html_writer::link(new moodle_url('/local/obe/views/dosen/dashboard.php',['id'=>$courseid,'halaman'=>'aktivitas_nilai']),'1. Pemetaan aktivitas dan bobot',['class'=>'btn btn-primary mr-2 mb-2']);}
+        echo html_writer::link(new moodle_url('/local/obe/views/dosen/dashboard.php',['id'=>$courseid,'halaman'=>'laporan']),'Lihat capaian kelas',['class'=>'btn btn-outline-primary mr-2 mb-2']);
+        if ($relasi_kelas) {foreach (aktivitasnilai_manager::ambil_semua_pemetaan($courseid) as $entry) {
+            if ($entry->modulename==='obeinterview' && has_capability('mod/obeinterview:grade',context_module::instance($entry->cmid)) && has_capability('local/obe:approveai',$context)) {
+                echo html_writer::tag('p',html_writer::link(new moodle_url('/mod/obeinterview/view.php',['id'=>$entry->cmid]),'Periksa penilaian: '.s($entry->name),['class'=>'btn btn-outline-primary']));
+            }
+        }}
+        if ($canmanage && has_capability('local/obe:useai',$context)) {
+            echo html_writer::link(new moodle_url('/local/obe/ai/dashboard.php',['courseid'=>$courseid]),'Draf soal dan bukti AI (staging)',['class'=>'btn btn-primary']);
+        }
         break;
 }
 

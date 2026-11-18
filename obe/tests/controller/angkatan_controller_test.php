@@ -34,7 +34,7 @@ class angkatan_controller_test
         $prodiid =
             $DB->insert_record(
                 'local_obe_prodi',
-                (object)[
+                (object)['kode_prodi'=>'TEST-'.uniqid(), 
                     'nama_prodi' => 'Teknik Informatika'
                 ]
             );

@@ -152,7 +152,7 @@ $format_nilai = function($nilai, $desimal = 2) {
                             <i class="fa fa-bar-chart mr-1.5"></i> Grafik CPL
                         </a>
                         <a href="<?= $url_export->out() ?>" class="btn btn-success btn-sm font-weight-bold shadow-sm px-3" style="min-height: 32px; height: auto; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap;">
-                            <i class="fa fa-download mr-1.5"></i> Export CSV
+                            <i class="fa fa-download mr-1.5"></i> Unduh CSV
                         </a>
                     </div>
                 <?php else: ?>

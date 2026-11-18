@@ -1,0 +1,59 @@
+/* Shared Sub-CPMK detail view (dosen/mahasiswa/admin). No academic calculation changes. */
+.obe-subreport { min-width: 0; }
+.obe-subreport .obe-student-report { table-layout: auto; width: 100%; }
+.obe-subreport .obe-student-report th, .obe-subreport .obe-student-report td { word-break: normal; overflow-wrap: normal; vertical-align: top; }
+.obe-subreport .obe-student-name { min-width: 8rem; overflow-wrap: break-word; }
+.obe-subreport .obe-activity-cell { min-width: 18rem; }
+.obe-subreport .obe-activity-detail { border-bottom: 1px solid var(--bs-border-color, #dee2e6); padding: .8rem 0; }
+.obe-subreport .obe-activity-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: .4rem; margin-bottom: .6rem; }
+.obe-subreport .obe-activity-heading strong { overflow-wrap: break-word; min-width: 0; }
+.obe-subreport .obe-activity-metrics { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(7rem, 1fr)); gap: .6rem 1rem; }
+.obe-subreport .obe-activity-metrics > div { min-width: 0; }
+.obe-subreport .obe-activity-metrics dt { font-size: .85rem; font-weight: 500; white-space: normal; word-break: normal; overflow-wrap: normal; }
+.obe-subreport .obe-activity-metrics dd { margin: .1rem 0 0; font-variant-numeric: tabular-nums; }
+.obe-subreport .obe-number { display: inline-block; white-space: nowrap; word-break: normal; overflow-wrap: normal; font-variant-numeric: tabular-nums; }
+.obe-subreport .obe-summary-cell { min-width: 4rem; }
+@media (max-width: 767px) {
+    .obe-subreport .table-responsive { overflow: visible; padding: .5rem !important; }
+    .obe-subreport .obe-student-report, .obe-subreport .obe-student-report tbody { display: block; width: 100%; }
+    .obe-subreport .obe-student-report thead { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; }
+    .obe-subreport .obe-student-row { display: flex; flex-direction: column; border: 1px solid var(--bs-border-color, #dee2e6); border-radius: .4rem; margin-bottom: 1rem; }
+    .obe-subreport .obe-student-report td { display: block; width: auto; min-width: 0; text-align: left !important; padding: .65rem !important; }
+    .obe-subreport .obe-summary-cell { display: flex !important; justify-content: space-between; gap: .75rem; }
+    .obe-subreport .obe-summary-cell::before { content: attr(data-label); font-weight: 500; }
+    .obe-subreport .obe-student-name { order: -2; }
+    .obe-subreport .obe-summary-cell[data-label="Nilai Sub-CPMK"] { order: -1; background: var(--bs-tertiary-bg, #f8f9fa); }
+    .obe-subreport .obe-activity-metrics { display: block; }
+    .obe-subreport .obe-activity-metrics > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .75rem; padding: .3rem 0; }
+    .obe-subreport .obe-activity-metrics dd { margin: 0; text-align: right; }
+    .obe-subreport .card-header > .d-flex { flex-wrap: wrap; gap: .75rem; }
+}
+.obe-subreport .obe-student-name > div { overflow-wrap: break-word; min-width: 0; }
+.obe-subreport .obe-activity-heading strong { max-width: 100%; }
+
+.obe-subreport .obe-summary-cell .badge { white-space: normal; padding: .4rem .5rem !important; }
+/* Common workspace: respect Moodle colours and provide visible, usable controls. */
+.obe-workspace { min-width: 0; }
+.obe-workspace .btn:focus-visible, .obe-workspace summary:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.obe-workspace .table-responsive { max-width: 100%; }
+.obe-workspace .table td, .obe-workspace .table th { word-break: normal; }
+.obe-workspace .btn { white-space: normal; }
+.obe-rubric-row { display: grid; grid-template-columns: minmax(8rem,1fr) minmax(8rem,2fr); gap: .5rem; padding: .75rem 0; border-bottom: 1px solid var(--bs-border-color,#dee2e6); }
+.obe-workspace pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+@media(max-width:767px) {
+  .obe-workspace .table { font-size: .9rem; }
+  .obe-workspace .btn-group { flex-wrap: wrap; gap: .35rem; }
+  .obe-workspace .card-header.d-flex, .obe-workspace .card-body.d-flex, .obe-workspace .d-flex.justify-content-between { flex-wrap: wrap; gap: .75rem; }
+  .obe-workspace .form-inline { flex-wrap: wrap; gap: .5rem; }
+  .obe-workspace input:not([type=hidden]), .obe-workspace select, .obe-workspace textarea { max-width: 100%; }
+  .obe-workspace .btn { min-height: 44px !important; min-width: 44px; }
+  .obe-rubric-row { display: block; }
+  .obe-rubric-row label { margin-top: .5rem; }
+}
+@media(max-width:767px) {
+  .obe-workspace .obe-stack-table, .obe-workspace .obe-stack-table > tbody { display: block; width: 100%; }
+  .obe-workspace .obe-stack-table > thead { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; }
+  .obe-workspace .obe-stack-row { display: block; border: 1px solid var(--bs-border-color,#dee2e6); margin-bottom: 1rem; }
+  .obe-workspace .obe-stack-row > td { display: grid; grid-template-columns: minmax(5.5rem,1fr) minmax(0,2fr); gap: .6rem; width: auto !important; min-width: 0 !important; padding: .6rem !important; text-align: left !important; overflow-wrap: break-word; }
+  .obe-workspace .obe-stack-row > td::before { content: attr(data-label); font-size: .85rem; font-weight: 600; }
+}

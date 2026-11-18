@@ -115,14 +115,14 @@ $kembali_url = new moodle_url('/local/obe/views/admin/dashboard.php', [
                 </div>
                 <div class="col-md-6">
                     <div class="form-group mb-3">
-                        <label class="font-weight-bold text-dark">Nilai Maximum <span class="text-danger">*</span></label>
+                        <label class="font-weight-bold text-dark">Nilai maksimum <span class="text-danger">*</span></label>
                         <input type="number" step="0.01" min="0" max="100" name="nilai_max" class="form-control font-weight-bold" required value="<?= $data->nilai_max !== null ? rtrim(rtrim(number_format((float)$data->nilai_max, 2), '0'), '.') : '' ?>" placeholder="100">
                     </div>
                 </div>
             </div>
 
             <div class="form-group mb-4">
-                <label class="for="status_kompeten" class="font-weight-bold text-dark">Status Capaian OBE <span class="text-danger">*</span></label>
+                <label for="status_kompeten" class="font-weight-bold text-dark">Status Capaian OBE <span class="text-danger">*</span></label>
                 <select name="status_kompeten" id="status_kompeten" class="form-control" required>
                     <option value="1" <?= (isset($data->status_kompeten) && $data->status_kompeten == 1) ? 'selected' : '' ?>>KOMPETEN (Lulus Kompetensi)</option>
                     <option value="0" <?= (isset($data->status_kompeten) && $data->status_kompeten == 0) ? 'selected' : '' ?>>BELUM KOMPETEN (Tidak Lulus)</option>

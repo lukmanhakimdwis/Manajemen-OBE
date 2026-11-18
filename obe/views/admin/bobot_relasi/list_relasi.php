@@ -172,7 +172,7 @@ $proses_url             = new moodle_url('/local/obe/views/admin/bobot_relasi/pr
                                             </div>
                                         </form>
                                     <?php else: ?>
-                                        <span class="text-secondary font-weight-bold small">Root (100%)</span>
+                                        <span class="text-secondary font-weight-bold small">Tingkat CPL (100%)</span>
                                     <?php endif; ?>
                                 </td>
                             </tr>

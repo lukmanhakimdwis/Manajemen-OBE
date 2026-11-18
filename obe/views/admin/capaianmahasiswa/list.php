@@ -166,7 +166,7 @@ $format_nilai = function($nilai, $desimal = 2) {
            class="btn btn-success btn-sm">
 
             <i class="fa fa-download mr-1"></i>
-            Export CSV
+            Unduh CSV
         </a>
 
     </div>

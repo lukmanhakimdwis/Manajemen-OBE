@@ -47,5 +47,10 @@ function xmldb_local_obe_upgrade($oldversion) {
         }
         upgrade_plugin_savepoint(true, 2026111501, 'local', 'obe');
     }
+    if ($oldversion < 2026111502) {
+        require_once(__DIR__ . '/../classes/ai/schema.php');
+        \local_obe\ai\schema::install();
+        upgrade_plugin_savepoint(true, 2026111502, 'local', 'obe');
+    }
     return true;
 }

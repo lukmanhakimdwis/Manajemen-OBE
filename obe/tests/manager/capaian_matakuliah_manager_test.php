@@ -2,6 +2,7 @@
 namespace local_obe;
 
 defined('MOODLE_INTERNAL') || die();
+require_once(__DIR__.'/../fixtures/legacy_framework.php');
 
 global $CFG;
 require_once($CFG->dirroot . '/local/obe/classes/manager/capaian_kelas_manager.php');
@@ -73,10 +74,11 @@ class capaian_matakuliah_manager_test extends advanced_testcase {
         $idsubcpmk = $DB->insert_record('local_obe_kompetensi', $subcpmk);
 
         // Simpan bobot relasi default (100%)
-        $this->simpan_bobot($idcpl, $idindikator, 100, $idtahun);
-        $this->simpan_bobot($idindikator, $idcpmk, 100, $idtahun);
-        $this->simpan_bobot($idcpmk, $idsubcpmk, 100, $idtahun);
+        $this->simpan_bobot($idindikator, $idcpl, 100, $idtahun);
+        $this->simpan_bobot($idcpmk, $idindikator, 100, $idtahun);
+        $this->simpan_bobot($idsubcpmk, $idcpmk, 100, $idtahun);
 
+        \local_obe_test_bind_framework($this->getDataGenerator(),$idprodi,$idtahun);
         return [
             'prodi'     => $idprodi,
             'tahun'     => $idtahun,
@@ -92,6 +94,8 @@ class capaian_matakuliah_manager_test extends advanced_testcase {
         global $DB;
         $bobot = new stdClass();
         $bobot->id_kompetensi_asal = $asal;
+        $bobot->tipe_asal=$DB->get_field('local_obe_kompetensi','tipe',['id'=>$asal]);
+        $bobot->tipe_tujuan=$DB->get_field('local_obe_kompetensi','tipe',['id'=>$tujuan]);
         $bobot->id_kompetensi_tujuan = $tujuan;
         $bobot->nilai_bobot = $nilai;
         $bobot->id_tahun_akademik = $tahun;

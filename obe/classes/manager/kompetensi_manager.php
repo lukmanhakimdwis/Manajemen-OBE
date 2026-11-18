@@ -49,6 +49,9 @@ class kompetensi_manager {
      * @return bool
      */
     public static function sync_competencies($prodi_id, $id_tahun_akademik = 0) {
+        return \local_obe\local\assessment_integrity::atomic(static function() use($prodi_id,$id_tahun_akademik) {return self::sync_locked($prodi_id,$id_tahun_akademik);});
+    }
+    private static function sync_locked($prodi_id,$id_tahun_akademik) {
         global $DB, $SESSION;
 
         if (empty($id_tahun_akademik)) {
@@ -69,10 +72,16 @@ class kompetensi_manager {
         $sourceids = $DB->get_fieldset_select('competency', 'id', 'competencyframeworkid = ?', [$mapping->frameworkid]);
         $locals = $DB->get_records('local_obe_kompetensi', ['id_prodi' => $prodi_id, 'id_tahun_akademik' => $id_tahun_akademik]);
         foreach ($locals as $local) {
+            $source=$DB->get_record('competency',['id'=>$local->competencyid,'competencyframeworkid'=>$mapping->frameworkid]);
+            $oldparent=$local->parent_id?$DB->get_field('local_obe_kompetensi','competencyid',['id'=>$local->parent_id]):0;
+            if (!$source||(int)$oldparent!==(int)$source->parentid||(int)$local->frameworkid!==(int)$mapping->frameworkid) {
+                \local_obe\local\assessment_integrity::protect_competency((int)$local->id,true);
+            }
+
             if (!in_array($local->competencyid, $sourceids)) {
                 if ($DB->record_exists('local_obe_aktivitas_map', ['sub_cpmk_id' => $local->id]) ||
                     $DB->record_exists_select('local_obe_bobot_relasi', 'id_kompetensi_asal = ? OR id_kompetensi_tujuan = ?', [$local->id, $local->id])) {
-                    throw new \moodle_exception('Kompetensi yang dihapus masih dirujuk bobot atau aktivitas. Arsipkan kurikulum lama sebelum sinkronisasi.');
+                    throw new \moodle_exception('assessmenterror','local_obe','', 'Kompetensi yang dihapus masih dirujuk bobot atau aktivitas. Arsipkan kurikulum lama sebelum sinkronisasi.');
                 }
                 $DB->delete_records('local_obe_kompetensi', ['id' => $local->id]);
             }

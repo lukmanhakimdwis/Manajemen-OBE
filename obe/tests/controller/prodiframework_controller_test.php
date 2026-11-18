@@ -45,23 +45,8 @@ class prodiframework_controller_test
         // FRAMEWORK
         // =====================================================
 
-        $frameworkid =
-            $DB->insert_record(
-                'competency_framework',
-                (object)[
-                    'shortname' => 'KKNI',
-                    'idnumber' => 'FR001',
-                    'description' => 'Framework Testing',
-                    'descriptionformat' => 1,
-                    'visible' => 1,
-                    'scaleid' => 0,
-                    'scaleconfiguration' => '',
-                    'taxonomies' => '',
-                    'contextid' => 1,
-                    'timecreated' => time(),
-                    'timemodified' => time(),
-                ]
-            );
+        $framework=$this->getDataGenerator()->get_plugin_generator('core_competency')->create_framework(['shortname'=>'KKNI','idnumber'=>'FR001','description'=>'Framework Testing']);
+        $frameworkid=$framework->get('id');
 
         // =====================================================
         // TAHUN AKADEMIK

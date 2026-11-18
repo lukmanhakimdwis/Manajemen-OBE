@@ -65,4 +65,15 @@ $capabilities = [
             'student' => CAP_ALLOW,
         ],
     ],
+    'local/obe:useai' => [
+        'riskbitmask'=>RISK_PERSONAL, 'captype'=>'write','contextlevel'=>CONTEXT_COURSE,
+        'archetypes'=>['editingteacher'=>CAP_ALLOW,'manager'=>CAP_ALLOW],
+    ],
+    'local/obe:approveai' => [
+        'captype'=>'write','contextlevel'=>CONTEXT_COURSE,
+        'archetypes'=>['editingteacher'=>CAP_ALLOW,'manager'=>CAP_ALLOW],
+    ],
+    'local/obe:ingestai' => [
+        'captype'=>'write','contextlevel'=>CONTEXT_COURSE,'archetypes'=>[],
+    ],
 ];

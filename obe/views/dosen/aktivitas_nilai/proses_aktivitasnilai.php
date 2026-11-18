@@ -39,5 +39,10 @@ try {
             break;
     }
 } catch (Exception $e) {
-    redirect($url, $e->getMessage(), 3, \core\output\notification::NOTIFY_ERROR);
+    if (in_array($aksi,['simpan','update'],true)) {
+        $SESSION->obe_mapping_form[$courseid]=['cmid'=>optional_param('cmid',0,PARAM_INT),'sub_cpmk_id'=>optional_param('sub_cpmk_id',0,PARAM_INT),'bobot'=>optional_param('bobot','',PARAM_RAW_TRIMMED)];
+        $url->param('aksi',$aksi==='update'?'edit':'tambah');$url->param('map_id',$id);$url->param('cmid',optional_param('cmid',0,PARAM_INT));
+    }
+    if ($aksi==='hapus') {redirect($url,'Penghapusan ditolak. Aspek mungkin sudah memiliki nilai (termasuk 0) atau riwayat. Gunakan Penggantian aspek; bila referensi hilang, minta pengelola menjalankan audit integritas.',null,\core\output\notification::NOTIFY_ERROR);}
+    redirect($url, 'Pemetaan belum tersimpan. Periksa kesesuaian fokus wawancara, Sub-CPMK, kelas/tahun dan sisa bobot. Isian Anda dipertahankan.', null, \core\output\notification::NOTIFY_ERROR);
 }

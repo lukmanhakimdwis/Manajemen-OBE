@@ -137,6 +137,10 @@ ob_start();
 require_once($CFG->dirroot . '/local/obe/views/admin/tahun_akademik/switcher.php');
 
 switch ($halaman) {
+    case 'beranda':
+    case 'dashboard':
+        include(__DIR__.'/beranda.php');
+        break;
     case 'tahun_akademik':
         $file_target = ($sub === 'form') ? 'form_tahun_akademik.php' : 'list_tahun_akademik.php';
         $path = __DIR__ . '/tahun_akademik/' . $file_target;

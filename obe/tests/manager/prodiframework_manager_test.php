@@ -25,21 +25,8 @@ class prodiframework_manager_test extends advanced_testcase {
         $idprodi = $DB->insert_record('local_obe_prodi', $prodi);
 
         // Framework Moodle
-        $framework = new \stdClass();
-        $framework->shortname = 'Framework OBE';
-        $framework->idnumber = 'FW001';
-        $framework->contextid = 1;
-        $framework->scaleid = 0;
-        $framework->scaleconfiguration = '';
-        $framework->visible = 1;
-        $framework->taxonomies = '';
-        $framework->timecreated = time();
-        $framework->timemodified = time();
-
-        $idframework = $DB->insert_record(
-            'competency_framework',
-            $framework
-        );
+        $framework=$this->getDataGenerator()->get_plugin_generator('core_competency')->create_framework(['shortname'=>'Framework OBE','idnumber'=>'FW001']);
+        $idframework=$framework->get('id');
 
         // Tahun Akademik
         $tahun = new \stdClass();

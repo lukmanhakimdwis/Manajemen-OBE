@@ -8,7 +8,16 @@ global $SESSION, $DB;
 // Mengambil seluruh data pemetaan aktivitas nilai untuk course ini
 $daftar_pemetaan = aktivitasnilai_manager::ambil_semua_pemetaan($courseid);
 $usage_data = aktivitasnilai_manager::get_total_bobot_usage($courseid);
+$rawcount=$DB->count_records_sql('SELECT COUNT(a.id) FROM {local_obe_aktivitas_map} a JOIN {course_modules} cm ON cm.id=a.cmid WHERE cm.course=:c',['c'=>$courseid]);
+if ($rawcount!==count(\local_obe\local\assessment_integrity::maps((int)$courseid))) {echo $OUTPUT->notification('Ada pemetaan di luar cakupan prodi/tahun/framework aktif. Bobotnya tidak digunakan. Jalankan audit integritas sebelum mengubah penilaian.','warning');}
+
 ?>
+<p><?= html_writer::link(new moodle_url('/local/obe/views/dosen/aktivitas_nilai/replace.php',['courseid'=>$courseid]),'Riwayat penggantian aspek') ?></p>
+<p>Bobot tetap dimiliki aktivitas tersembunyi atau yang menunggu penghapusan sampai penghapusan benar-benar selesai. Jika total tidak sesuai daftar, minta pengelola menjalankan audit integritas. Aspek bernilai atau memiliki riwayat tidak boleh dihapus biasa.</p>
+<p>Tambahkan aktivitas, petakan ke Sub-CPMK, lalu periksa total bobot. Nilai aktivitas yang disahkan dibaca oleh laporan OBE. Ketersediaan lab dan alat eksternal mengikuti pemasangan Moodle.</p>
+<?php if ($DB->record_exists('modules',['name'=>'obeinterview']) && has_capability('mod/obeinterview:addinstance',context_course::instance($courseid))): ?>
+<p><?= html_writer::link(new moodle_url('/course/modedit.php',['add'=>'obeinterview','course'=>$courseid,'section'=>0]),'Tambah Wawancara OBE AI') ?></p>
+<?php endif; ?>
 
 <div class="card shadow-sm border-0 mt-3">
     <div class="card-header bg-primary text-white py-3 shadow-sm">
@@ -32,7 +41,7 @@ $usage_data = aktivitasnilai_manager::get_total_bobot_usage($courseid);
                     <?php 
                         $sub_id = $act->sub_cpmk_id;
                         $terpakai = isset($usage_data[$sub_id]) ? (float)$usage_data[$sub_id] : 0;
-                        $terpakai_percent = ($terpakai <= 1 && $terpakai > 0) ? $terpakai * 100 : $terpakai;
+                        $terpakai_percent = $terpakai; // Manager returns percentages, including valid totals of 1%.
                         $sisa = 100.00 - $terpakai_percent;
                         // Format tampilan persen
                         $sisa_display = (floor($sisa) == $sisa)
@@ -40,7 +49,7 @@ $usage_data = aktivitasnilai_manager::get_total_bobot_usage($courseid);
                             : rtrim(rtrim(number_format($sisa, 2, '.', ''), '0'), '.');
 
                         // Skema warna dinamis 3 level untuk sisa kapasitas bobot (Hijau / Kuning / Merah)
-                        if ($sisa >= 50.00) {
+                        if (abs($sisa)<0.00001 || $sisa >= 50.00) {
                             $text_color_class = 'text-success';
                             $icon_class = 'fa-check-circle';
                         } elseif ($sisa >= 25.00 && $sisa < 50.00) {
@@ -54,7 +63,8 @@ $usage_data = aktivitasnilai_manager::get_total_bobot_usage($courseid);
                     <tr>
                         <td class="pl-4 py-3">
                             <div class="font-weight-bold text-dark mb-1" style="font-size: 0.95rem;">
-                                <i class="fa fa-file-text-o text-muted mr-2"></i><?= s($act->name) ?>
+                                <i class="fa fa-file-text-o text-muted mr-2"></i><?= !empty($act->deletioninprogress) ? s($act->name) : html_writer::link(new moodle_url("/mod/".$act->modulename."/view.php",["id"=>$act->cmid]),s($act->name)) ?>
+                                <?php if (!empty($act->deletioninprogress)): ?><p class="text-warning mb-0">Menunggu penghapusan Moodle. Bobot masih dihitung sampai penghapusan selesai; jika tertolak karena nilai, minta pengelola memeriksa task.</p><?php endif; ?>
                             </div>
                             <span class="badge badge-light text-muted border px-2 py-1" style="font-size: 0.7rem; font-weight: 600;">
                                 <i class="fa fa-cube mr-1"></i><?= strtoupper(s($act->modulename)) ?>
@@ -67,7 +77,7 @@ $usage_data = aktivitasnilai_manager::get_total_bobot_usage($courseid);
                                     <?= isset($act->nama_sub_cpmk) ? s($act->nama_sub_cpmk) : 'ID: ' . $sub_id ?>
                                 </div>
                                 <small class="<?= $text_color_class ?> d-block mt-1">
-                                    <i class=""></i>Sisa bobot: <?= $sisa_display ?>%
+                                    <i class="" aria-hidden="true"></i><?= abs($sisa)<0.00001 ? "Total 100% — Lengkap" : "Total ".s($terpakai_percent)."% — Sisa ".$sisa_display."%" ?>
                                 </small>
                             <?php else: ?>
                                 <span class="text-muted small font-italic">
@@ -95,12 +105,15 @@ $usage_data = aktivitasnilai_manager::get_total_bobot_usage($courseid);
                         </td>
                         
                         <td class="text-center py-3">
-                            <?php if (!empty($act->map_id)): ?>
+                            <?php if (!empty($act->deletioninprogress)): ?>
+                                <span class="text-muted">Periksa task penghapusan</span>
+                            <?php elseif (!empty($act->map_id)): ?>
+                                <?= html_writer::link(new moodle_url('/local/obe/views/dosen/aktivitas_nilai/replace.php',['courseid'=>$courseid,'id'=>$act->map_id]),'Ganti aspek',['class'=>'btn btn-sm btn-outline-primary mb-1']) ?>
                                 <div class="btn-group shadow-sm" role="group">
                                     <a href="?id=<?= $courseid ?>&halaman=aktivitas_nilai&aksi=edit&map_id=<?= $act->map_id ?>" 
-                                       class="btn btn-sm btn-light text-primary border" title="Edit Pemetaan"><i class="fa fa-edit"></i></a>
+                                       class="btn btn-sm btn-light text-primary border" aria-label="Ubah pemetaan <?= s($act->name) ?>" title="Ubah pemetaan"><i class="fa fa-edit"></i></a>
                                     <a href="aktivitas_nilai/proses_aktivitasnilai.php?courseid=<?= $courseid ?>&aksi=hapus&id=<?= $act->map_id ?>&sesskey=<?= sesskey() ?>" 
-                                       class="btn btn-sm btn-light text-danger border" title="Hapus Pemetaan" onclick="return confirm('Apakah Anda yakin ingin menghapus pemetaan aktivitas kurikulum ini?')"><i class="fa fa-trash"></i></a>
+                                       class="btn btn-sm btn-light text-danger border" aria-label="Hapus pemetaan <?= s($act->name) ?>" title="Hapus pemetaan" onclick="return confirm('Apakah Anda yakin ingin menghapus pemetaan aktivitas kurikulum ini?')"><i class="fa fa-trash"></i></a>
                                 </div>
                             <?php else: ?>
                                 <a href="?id=<?= $courseid ?>&halaman=aktivitas_nilai&aksi=tambah&cmid=<?= $act->cmid ?>" 

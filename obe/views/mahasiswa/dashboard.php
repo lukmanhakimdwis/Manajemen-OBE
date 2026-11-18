@@ -84,7 +84,10 @@ $content = ob_get_clean();
 echo $OUTPUT->header();
 
 if (!empty($content)) {
-    echo $content;
+    echo '<div class="obe-workspace">';
+echo html_writer::link(new moodle_url('/course/view.php',['id'=>$courseid]),'Kembali ke kursus',['class'=>'btn btn-outline-secondary mb-3']);
+echo \local_obe\local\ux::glossary();
+echo $content;echo '</div>';
 }
 
 echo $OUTPUT->footer();

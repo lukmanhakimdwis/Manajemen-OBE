@@ -137,7 +137,7 @@ class relasikelas_manager {
         );
     }
 
-    if ($DB->record_exists_select('local_obe_relasi_kelas', 'id_kursus_moodle = ? AND id <> ?', [$data->id_kursus_moodle, $data->id])) { throw new \moodle_exception('Course Moodle sudah dipetakan.'); }
+    if ($DB->record_exists_select('local_obe_relasi_kelas', 'id_kursus_moodle = ? AND id <> ?', [$data->id_kursus_moodle, $data->id])) { throw new \moodle_exception('assessmenterror','local_obe','', 'Course Moodle sudah dipetakan.'); }
     $result = $DB->update_record('local_obe_relasi_kelas', $data);
     \local_obe\access_guard::audit('update', 'relasi_kelas', $data->id ?? 0, (array)$data);
     return $result;
@@ -146,6 +146,7 @@ class relasikelas_manager {
     public static function hapus($id) {
         global $DB;
         $old = $DB->get_record('local_obe_relasi_kelas', ['id' => $id], '*', IGNORE_MISSING);
+        if ($old&&$DB->record_exists_sql('SELECT a.id FROM {local_obe_aktivitas_map} a JOIN {course_modules} cm ON cm.id=a.cmid WHERE cm.course=:c',['c'=>$old->id_kursus_moodle])) {throw new \moodle_exception('assessmenterror','local_obe','', 'Kelas masih memiliki pemetaan penilaian. Pertahankan relasi untuk keterlacakan nilai.');}
         $result = $DB->delete_records('local_obe_relasi_kelas', ['id' => $id]);
         \local_obe\access_guard::audit('delete', 'relasi_kelas', $id, $old ? (array)$old : []);
         return $result;

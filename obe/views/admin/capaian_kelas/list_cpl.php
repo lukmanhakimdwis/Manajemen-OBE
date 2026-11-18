@@ -129,7 +129,7 @@ $format_angka = function($nilai, $desimal = 2) {
               
                 <a href="<?= $url_grafik->out() ?>"  class="btn btn-primary btn-sm font-weight-bold shadow-sm mr-2"> <i class=""></i> Grafik CPL</a>
 
-                <a href="<?= $url_export_rekap->out() ?>"  class="btn btn-success btn-sm font-weight-bold shadow-sm mr-2"> <i class="fa fa-file-excel"></i> Export Data Kelas</a>
+                <a href="<?= $url_export_rekap->out() ?>"  class="btn btn-success btn-sm font-weight-bold shadow-sm mr-2"> <i class="fa fa-file-excel"></i> Unduh data kelas</a>
                 <a href="<?= $url_kembali->out() ?>" class="btn btn-sm btn-outline-secondary font-weight-bold shadow-sm">
                     <i class="fa fa-arrow-left mr-1"></i> Kembali
                 </a>

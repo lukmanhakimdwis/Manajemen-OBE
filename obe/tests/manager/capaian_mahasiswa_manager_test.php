@@ -2,6 +2,7 @@
 namespace local_obe;
 
 defined('MOODLE_INTERNAL') || die();
+require_once(__DIR__.'/../fixtures/legacy_framework.php');
 
 global $CFG;
 require_once($CFG->dirroot . '/local/obe/classes/manager/capaian_kelas_manager.php');
@@ -65,10 +66,11 @@ class capaian_mahasiswa_manager_test extends advanced_testcase {
         $idsubcpmk = $DB->insert_record('local_obe_kompetensi', $subcpmk);
 
         // Sambungkan Relasi Bobot 100%
-        $this->simpan_bobot($idcpl, $idindikator, 100, $idtahun);
-        $this->simpan_bobot($idindikator, $idcpmk, 100, $idtahun);
-        $this->simpan_bobot($idcpmk, $idsubcpmk, 100, $idtahun);
+        $this->simpan_bobot($idindikator, $idcpl, 100, $idtahun);
+        $this->simpan_bobot($idcpmk, $idindikator, 100, $idtahun);
+        $this->simpan_bobot($idsubcpmk, $idcpmk, 100, $idtahun);
 
+        \local_obe_test_bind_framework($this->getDataGenerator(),$idprodi,$idtahun);
         return [
             'prodi'     => $idprodi,
             'tahun'     => $idtahun,
@@ -83,6 +85,8 @@ class capaian_mahasiswa_manager_test extends advanced_testcase {
         global $DB;
         $bobot = new stdClass();
         $bobot->id_kompetensi_asal = $asal;
+        $bobot->tipe_asal=$DB->get_field('local_obe_kompetensi','tipe',['id'=>$asal]);
+        $bobot->tipe_tujuan=$DB->get_field('local_obe_kompetensi','tipe',['id'=>$tujuan]);
         $bobot->id_kompetensi_tujuan = $tujuan;
         $bobot->nilai_bobot = $nilai;
         $bobot->id_tahun_akademik = $tahun;
@@ -159,7 +163,7 @@ class capaian_mahasiswa_manager_test extends advanced_testcase {
         // 2. Buat Kursus Riil & Daftarkan Mahasiswa
         $course = $this->getDataGenerator()->create_course();
         $student = $this->getDataGenerator()->create_user(['username' => 'mhs_single', 'firstname' => 'Rian']);
-        $this->getDataGenerator()->enrol_user($student->id, $course->id);
+        $this->getDataGenerator()->enrol_user($student->id, $course->id, 'student');
 
         // 3. Hubungkan ke Relasi Kelas
         $relasi = new stdClass();
@@ -170,7 +174,7 @@ class capaian_mahasiswa_manager_test extends advanced_testcase {
         $DB->insert_record('local_obe_relasi_kelas', $relasi);
 
         // 4. Map Aktivitas ke Sub-CPMK
-        $assign = $this->getDataGenerator()->create_module('assign', ['course' => $course->id]);
+        $assign = $this->getDataGenerator()->create_module('assign', ['course' => $course->id, 'grade' => 100]);
         $map = new stdClass();
         $map->sub_cpmk_id = $base['subcpmk'];
         $map->cmid = $assign->cmid;
@@ -179,9 +183,9 @@ class capaian_mahasiswa_manager_test extends advanced_testcase {
 
         // 5. Masukkan Nilai Riil (80.00) ke Gradebook
         $grade = \grade_item::fetch(['courseid' => $course->id, 'itemtype' => 'mod', 'itemmodule' => 'assign', 'iteminstance' => $assign->id]);
-        if ($grade) {
-            $grade->update_final_grade($student->id, 80.00);
-        }
+        $this->assertNotFalse($grade);
+        $this->assertNotFalse($grade->update_final_grade($student->id, 80.00));
+        $this->assertEquals(80, \grade_grade::fetch(['itemid'=>$grade->id,'userid'=>$student->id])->finalgrade);
 
         // 6. Eksekusi Pencarian Trace Profil Kompetensi Mahasiswa Terkait
         $trace = capaian_mahasiswa_manager::ambil_trace_cpl_mahasiswa($student->id, $base['prodi'], $base['tahun']);

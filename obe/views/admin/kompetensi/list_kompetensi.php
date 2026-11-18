@@ -85,7 +85,7 @@ $sync_url = new moodle_url($proses_url, [
                 <a href="<?= $url_bobot->out() ?>" class="btn btn-primary btn-sm shadow-sm font-weight-bold mr-2">
                     <i class="fa fa-link mr-1"></i> Bobot Kompetensi
                 </a>
-                <a href="<?= $sync_url->out() ?>" class="btn btn-success btn-sm shadow-sm font-weight-bold" onclick="return confirm('Hapus data ini?')">
+                <a href="<?= $sync_url->out() ?>" class="btn btn-success btn-sm shadow-sm font-weight-bold" onclick="return confirm('Sinkronkan struktur dari kerangka kompetensi untuk prodi dan tahun yang dipilih? Perubahan yang masih dirujuk aktivitas akan diperiksa server.')">
                     <i class="fa fa-refresh mr-1"></i> Sinkronisasi Data
                 </a>
             </div>
@@ -105,7 +105,7 @@ $sync_url = new moodle_url($proses_url, [
                     <tr>
                         <td colspan="3" class="text-center text-muted py-5">
                             <i class="fa fa-exclamation-triangle fa-2x d-block mb-2 text-warning"></i>
-                            Data hierarki belum tersedia. Silakan klik tombol <strong class="text-success">"Sinkronisasi Data"</strong> di atas untuk memetakan data framework prodi aktif.
+                            Struktur kompetensi belum tersedia. Pastikan kerangka untuk prodi dan tahun ini sudah dihubungkan dan berisi kompetensi, lalu pilih Sinkronisasi Data.
                         </td>
                     </tr>
                 <?php else: ?>

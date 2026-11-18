@@ -114,7 +114,7 @@ $is_kaprodi = prodi_manager::is_kaprodi($USER->id);
     <?php if ($is_admin_path): ?>
 
         <div class="menu-header">
-            <?= $is_kaprodi ? 'KAPRODI DASHBOARD' : 'ADMINISTRATOR' ?>
+            <?= $is_kaprodi ? 'PROGRAM STUDI' : 'PENGELOLA OBE' ?>
         </div>
 
         <?php
@@ -158,6 +158,8 @@ if (!$is_kaprodi) {
         }
 
         foreach ($menu_admin as $item):
+            $needed=in_array($item['halaman'],['capaian_pembelajaran_kelas','capaian_pembelajaran_matakuliah','capaian_pembelajaran_prodi','capaian_pembelajaran_mahasiswa'])?'local/obe:viewprogramreport':($item['halaman']==='skala_nilai'?'local/obe:configprogramscale':'local/obe:manageprogram');
+            if ($is_kaprodi && !has_capability($needed,$sys_context)) {continue;}
             $url_item = new moodle_url('/local/obe/views/admin/dashboard.php', [
                 'halaman' => $item['halaman']
             ]);
@@ -180,11 +182,13 @@ if (!$is_kaprodi) {
 
         <?php
         $menu_dosen = [
+            ['halaman'=>'beranda','icon'=>'fa-home','label'=>'OBE Kelas'],
             ['halaman' => 'aktivitas_nilai', 'icon' => 'fa-tasks',     'label' => 'Pemetaan Aktivitas'],
             ['halaman' => 'laporan',         'icon' => 'fa-chart-bar', 'label' => 'Capaian Kelas'],
         ];
 
         foreach ($menu_dosen as $item):
+            if ($item['halaman']==='aktivitas_nilai' && !has_capability('local/obe:managecourse',$course_context)) {continue;}
             $url_item = new moodle_url('/local/obe/views/dosen/dashboard.php', [
                 'id_course' => $course_id,
                 'halaman'   => $item['halaman'],
@@ -197,7 +201,9 @@ if (!$is_kaprodi) {
                 <span><?= $item['label']; ?></span>
             </a>
         <?php endforeach; ?>
-
+        <?php if (has_capability('local/obe:managecourse',$course_context) && has_capability('local/obe:useai',$course_context)): ?>
+            <a class="list-group-item list-group-item-action" href="<?= (new moodle_url('/local/obe/ai/dashboard.php',['courseid'=>$course_id]))->out() ?>">Draf soal dan analisis AI</a>
+        <?php endif; ?>
     <?php endif; ?>
 
     <?php if (!$is_admin_path && !$is_dosen_path): ?>

@@ -4,6 +4,7 @@
 require_once(__DIR__ . '/../../../../../config.php');
 require_login();
 require_sesskey();
+\local_obe\access_guard::require_admin_or_kaprodi();
 
 use local_obe\manager\tahun_akademik_manager;
 
@@ -27,4 +28,9 @@ if ($id_tahun == 0) {
 }
 
 // REDIRECT DINAMIS: Mengembalikan user ke halaman semula mereka berada, bukan dipaksa ke tahun_akademik
-redirect(new moodle_url('/local/obe/views/admin/dashboard.php', ['halaman' => $halaman_asal]));
+$returnto=optional_param('returnto','',PARAM_LOCALURL);
+$url=$returnto?new moodle_url($returnto):new moodle_url('/local/obe/views/admin/dashboard.php',['halaman'=>$halaman_asal]);
+$allowed=new moodle_url('/local/obe/views/admin/dashboard.php');
+if ($url->get_path()!==$allowed->get_path()) {throw new invalid_parameter_exception('Tujuan kembali tidak sah');}
+$url->param('obe_year',$id_tahun);
+redirect($url);

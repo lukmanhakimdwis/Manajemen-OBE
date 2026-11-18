@@ -3,6 +3,7 @@
 namespace local_obe;
 
 defined('MOODLE_INTERNAL') || die();
+require_once(__DIR__.'/../fixtures/ai_fixture.php');
 
 global $CFG;
 
@@ -19,62 +20,14 @@ use local_obe\controller\bobot_relasi_controller;
  */
 class bobot_relasi_controller_test
     extends advanced_testcase {
+    use \local_obe\tests\ai_fixture;
 
     /**
      * Setup data dummy
      */
     private function buat_data_dummy() {
-
-        global $DB;
-
-        // =====================================================
-        // PRODI
-        // =====================================================
-
-        $prodiid =
-            $DB->insert_record(
-                'local_obe_prodi',
-                (object)[
-                    'nama_prodi' => 'Teknik Informatika'
-                ]
-            );
-
-        // =====================================================
-        // TAHUN AKADEMIK
-        // =====================================================
-
-        $tahunid =
-            $DB->insert_record(
-                'local_obe_tahun_akademik',
-                (object)[
-                    'nama_tahun' => '2025/2026',
-                    'status_aktif' => 1
-                ]
-            );
-
-        // =====================================================
-        // CPL
-        // =====================================================
-
-        $kompetensiid =
-            $DB->insert_record(
-                'local_obe_kompetensi',
-                (object)[
-                    'id_prodi' => $prodiid,
-                    'frameworkid' => 1,
-                    'id_tahun_akademik' => $tahunid,
-                    'nama_kompetensi' => 'CPL 1',
-                    'tipe' => 'CPL',
-                    'parent_id' => 0,
-                    'ambang_batas' => 70
-                ]
-            );
-
-        return [
-            'prodiid' => $prodiid,
-            'tahunid' => $tahunid,
-            'kompetensiid' => $kompetensiid
-        ];
+        $this->preventResetByRollback();$e=$this->environment();
+        return ['prodiid'=>$e['prodi'],'tahunid'=>$e['year'],'kompetensiid'=>$e['ids']['CPL']];
     }
 
     // =====================================================
@@ -86,7 +39,7 @@ class bobot_relasi_controller_test
         $this->resetAfterTest(true);
         $this->setAdminUser();
 
-        global $SESSION;
+        global $SESSION,$DB;
 
         $this->setAdminUser();
 
@@ -125,12 +78,14 @@ class bobot_relasi_controller_test
 
         } catch (\moodle_exception $e) {
 
-            // Redirect dianggap sukses
+            // A redirect alone is not proof of a successful save.
+            $this->assertEquals(50,$DB->get_field('local_obe_bobot_relasi','nilai_bobot',['id_kompetensi_asal'=>$data['kompetensiid'],'id_tahun_akademik'=>$data['tahunid']]));
             $this->assertTrue(true);
 
             return;
         }
 
+        $this->assertEquals(50,$DB->get_field('local_obe_bobot_relasi','nilai_bobot',['id_kompetensi_asal'=>$data['kompetensiid'],'id_tahun_akademik'=>$data['tahunid']]));
         $this->assertTrue(true);
     }
 

@@ -54,6 +54,7 @@ class access_guard {
         require_login();
         $context = \context_system::instance();
         require_capability('local/obe:manage', $context);
+        \local_obe\local\ux::restore_year();
         return $context;
     }
 
@@ -67,6 +68,7 @@ class access_guard {
         require_login();
 
         if (self::is_system_manager()) {
+            \local_obe\local\ux::restore_year();
             return null;
         }
 
@@ -76,6 +78,7 @@ class access_guard {
 
         $prodi = self::get_kaprodi_prodi();
         if ($prodi) {
+            \local_obe\local\ux::restore_year();
             return $prodi;
         }
 

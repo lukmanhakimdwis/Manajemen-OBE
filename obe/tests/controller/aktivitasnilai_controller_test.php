@@ -3,6 +3,7 @@
 namespace local_obe;
 
 defined('MOODLE_INTERNAL') || die();
+require_once(__DIR__.'/../fixtures/ai_fixture.php');
 
 global $CFG;
 
@@ -19,108 +20,17 @@ use local_obe\controller\aktivitasnilai_controller;
  */
 class aktivitasnilai_controller_test
     extends advanced_testcase {
+    use \local_obe\tests\ai_fixture;
 
     /**
      * Setup data dummy
      */
     private function buat_data_dummy() {
-
-        global $DB;
-
-        // =====================================================
-        // PRODI
-        // =====================================================
-
-        $prodiid = $DB->insert_record(
-            'local_obe_prodi',
-            (object)[
-                'nama_prodi' => 'Teknik Informatika'
-            ]
-        );
-
-        // =====================================================
-        // TAHUN AKADEMIK
-        // =====================================================
-
-        $tahunid = $DB->insert_record(
-            'local_obe_tahun_akademik',
-            (object)[
-                'nama_tahun' => '2025/2026',
-                'status_aktif' => 1
-            ]
-        );
-
-        // =====================================================
-        // CPL
-        // =====================================================
-
-        $cplid = $DB->insert_record(
-            'local_obe_kompetensi',
-            (object)[
-                'id_prodi' => $prodiid,
-                'frameworkid' => 1,
-                'id_tahun_akademik' => $tahunid,
-                'nama_kompetensi' => 'CPL 1',
-                'tipe' => 'CPL',
-                'parent_id' => 0,
-                'ambang_batas' => 70
-            ]
-        );
-
-        // =====================================================
-        // INDIKATOR
-        // =====================================================
-
-        $indikatorid = $DB->insert_record(
-            'local_obe_kompetensi',
-            (object)[
-                'id_prodi' => $prodiid,
-                'frameworkid' => 1,
-                'id_tahun_akademik' => $tahunid,
-                'nama_kompetensi' => 'Indikator 1',
-                'tipe' => 'INDIKATOR',
-                'parent_id' => $cplid,
-                'ambang_batas' => 70
-            ]
-        );
-
-        // =====================================================
-        // CPMK
-        // =====================================================
-
-        $cpmkid = $DB->insert_record(
-            'local_obe_kompetensi',
-            (object)[
-                'id_prodi' => $prodiid,
-                'frameworkid' => 1,
-                'id_tahun_akademik' => $tahunid,
-                'nama_kompetensi' => 'CPMK 1',
-                'tipe' => 'CPMK',
-                'parent_id' => $indikatorid,
-                'ambang_batas' => 70
-            ]
-        );
-
-        // =====================================================
-        // SUB CPMK
-        // =====================================================
-
-        $subid = $DB->insert_record(
-            'local_obe_kompetensi',
-            (object)[
-                'id_prodi' => $prodiid,
-                'frameworkid' => 1,
-                'id_tahun_akademik' => $tahunid,
-                'nama_kompetensi' => 'Sub CPMK 1',
-                'tipe' => 'SUB-CPMK',
-                'parent_id' => $cpmkid,
-                'ambang_batas' => 70
-            ]
-        );
-
-        return [
-            'subid' => $subid
-        ];
+        global $DB;$this->preventResetByRollback();$e=$this->environment();
+        $map=$DB->get_field('local_obe_aktivitas_map','id',['cmid'=>$e['activity']->cmid],MUST_EXIST);
+        \local_obe\manager\aktivitasnilai_manager::delete($map);
+        $activity=$this->getDataGenerator()->create_module('assign',['course'=>$e['course']->id]);
+        return ['subid'=>$e['ids']['SUB-CPMK'],'courseid'=>$e['course']->id,'cmid'=>$activity->cmid];
     }
 
     // =====================================================
@@ -137,11 +47,11 @@ class aktivitasnilai_controller_test
         $data =
             $this->buat_data_dummy();
 
-        $_POST['cmid'] = 10;
+        $_POST['cmid'] = $data['cmid'];
         $_POST['sub_cpmk_id'] = $data['subid'];
         $_POST['bobot'] = 40;
 
-        $_REQUEST['cmid'] = 10;
+        $_REQUEST['cmid'] = $data['cmid'];
         $_REQUEST['sub_cpmk_id'] = $data['subid'];
         $_REQUEST['bobot'] = 40;
 
@@ -160,7 +70,7 @@ class aktivitasnilai_controller_test
             $DB->get_record(
                 'local_obe_aktivitas_map',
                 [
-                    'cmid' => 10,
+                    'cmid' => $data['cmid'],
                     'sub_cpmk_id' => $data['subid']
                 ]
             );
@@ -177,11 +87,12 @@ class aktivitasnilai_controller_test
         $this->resetAfterTest(true);
         $this->setAdminUser();
 
-        $_POST['cmid'] = 10;
+        $data=$this->buat_data_dummy();
+        $_POST['cmid'] = $data['cmid'];
         $_POST['sub_cpmk_id'] = 0;
         $_POST['bobot'] = 40;
 
-        $_REQUEST['cmid'] = 10;
+        $_REQUEST['cmid'] = $data['cmid'];
         $_REQUEST['sub_cpmk_id'] = 0;
         $_REQUEST['bobot'] = 40;
 
@@ -211,7 +122,7 @@ class aktivitasnilai_controller_test
             $DB->insert_record(
                 'local_obe_aktivitas_map',
                 (object)[
-                    'cmid' => 10,
+                    'cmid' => $data['cmid'],
                     'sub_cpmk_id' => $data['subid'],
                     'bobot_aktivitas' => 20
                 ]
@@ -288,7 +199,7 @@ class aktivitasnilai_controller_test
             $DB->insert_record(
                 'local_obe_aktivitas_map',
                 (object)[
-                    'cmid' => $this->getDataGenerator()->create_module('assign', ['course' => $this->getDataGenerator()->create_course()->id])->cmid,
+                    'cmid' => $data['cmid'],
                     'sub_cpmk_id' => $data['subid'],
                     'bobot_aktivitas' => 30
                 ]

@@ -79,6 +79,9 @@ class skala_nilai_manager {
      */
     public static function hapus($id) {
         global $DB;
+        $scale=$DB->get_record('local_obe_skala_nilai',['id'=>$id],'*',MUST_EXIST);
+        if ($DB->record_exists_sql('SELECT a.id FROM {local_obe_aktivitas_map} a JOIN {local_obe_kompetensi} k ON k.id=a.sub_cpmk_id WHERE k.id_prodi=:p AND k.id_tahun_akademik=:y',['p'=>$scale->id_prodi,'y'=>$scale->id_tahun_akademik])) {throw new \moodle_exception('assessmenterror','local_obe','', 'Skala masih digunakan pemetaan penilaian. Gunakan versi kurikulum baru; jangan hapus skala historis.');}
+
 
         $old = $DB->get_record('local_obe_skala_nilai', ['id' => $id], '*', IGNORE_MISSING);
         $result = $DB->delete_records(

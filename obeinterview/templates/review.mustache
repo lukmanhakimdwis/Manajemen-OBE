@@ -1,0 +1,115 @@
+{{!
+    @template mod_obeinterview/review
+    Context is restricted by interview::activity/session and populated from stored evidence/decisions.
+}}
+<section id="obe-review" aria-label="Pemeriksaan wawancara">
+  <div class="card card-body mb-3">
+    <p class="mb-1"><strong>Target Sub-CPMK:</strong> {{target}}</p>
+    <p class="mb-1"><strong>Bobot wawancara terhadap Sub-CPMK:</strong> {{weight}}%</p>
+    <details><summary>Rincian CPL hingga Sub-CPMK</summary><ol class="mt-2">{{#path}}<li>{{type}}: {{label}}</li>{{/path}}</ol></details>
+  </div>
+  {{#hasqueue}}
+  <form method="get" class="obe-review-filter mb-3"><input type="hidden" name="id" value="{{cmid}}">
+    <label for="obe-roster-search">Cari mahasiswa</label><input class="form-control" id="obe-roster-search" name="q" value="{{q}}">
+    <label for="obe-roster-filter">Status peserta</label><select class="form-control" id="obe-roster-filter" name="filter">{{#filters}}<option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>{{/filters}}</select><button class="btn btn-outline-primary mt-2">Tampilkan</button>
+  </form>
+  <p>{{total}} peserta sesuai pilihan. Maksimum 10 peserta per halaman.</p>
+  <div class="table-responsive"><table class="table"><caption>Antrean pemeriksaan wawancara</caption><thead><tr><th scope="col">Mahasiswa</th><th scope="col">Status</th><th scope="col">Tindakan</th></tr></thead><tbody>
+  {{#roster}}<tr><td>{{name}}<br><small>{{username}}</small></td><td>{{status}}</td><td>{{#hassession}}<a href="{{url}}">Periksa sesi {{name}}</a>{{/hassession}}{{^hassession}}Belum memulai wawancara{{/hassession}}</td></tr>{{/roster}}</tbody></table></div>{{{paging}}}
+  {{/hasqueue}}
+  {{^hassessions}}<p class="alert alert-info">Tidak ada sesi pada tampilan ini. Peserta yang belum mulai tetap tercantum dalam daftar peserta.</p>{{/hassessions}}
+  {{#sessions}}
+  <article class="card mb-4" aria-labelledby="obe-student-{{id}}">
+    <div class="card-header">
+      <h3 class="h5 mb-2" id="obe-student-{{id}}">{{name}}</h3>
+      <div class="obe-review-summary">
+        <p><strong>Status wawancara:</strong> {{sessionstatus}}</p>
+        <p><strong>Status penilaian terbaru:</strong> {{lateststatus}}</p>
+        {{#hascurrent}}<p><strong>Nilai yang berlaku:</strong> {{#current}}<span class="obe-number">{{score}}/100</span> · Bukti #{{evidenceid}} · Nilai disahkan{{/current}}</p>{{/hascurrent}}
+        {{^hascurrent}}<p><strong>Nilai yang berlaku:</strong> Belum ada keputusan pengesahan.</p>{{/hascurrent}}
+        {{#hasgradebook}}<p><strong>Nilai di Gradebook:</strong> <span class="obe-number">{{gradebook}}/100</span></p>{{/hasgradebook}}
+        {{#haslatest}}<p><strong>Usulan terbaru:</strong> Bukti #{{latestid}} · {{lateststatus}}{{#haslatestscore}} · {{latestscore}}/100{{/haslatestscore}}</p>{{/haslatest}}
+      </div>
+      {{#gradewarning}}<p class="alert alert-warning">Nilai di Gradebook belum sesuai dengan keputusan terakhir. Minta pengelola memeriksa penguncian atau perubahan nilai manual sebelum mengoreksi.</p>{{/gradewarning}}
+      {{#haslatest}}<a class="btn btn-primary" href="{{action}}&amp;reviewid={{latestid}}#obe-evidence-{{latestid}}">Periksa penilaian</a>{{/haslatest}}
+      {{#cananalyse}}<form method="post" action="{{action}}" class="obe-review-analyse">
+        <input type="hidden" name="sesskey" value="{{sesskey}}"><input type="hidden" name="sid" value="{{id}}">
+        <button class="btn btn-outline-secondary" name="action" value="proposal">{{#haslatest}}Analisis ulang jawaban{{/haslatest}}{{^haslatest}}Analisis jawaban{{/haslatest}}</button>
+      </form>{{/cananalyse}}
+    </div>
+    <div class="card-body">
+      {{#isactive}}<p class="alert alert-info">Wawancara masih berlangsung. Analisis dapat berubah setelah jawaban berikutnya. Periksa kelengkapan bukti sebelum mengesahkan nilai.</p>{{/isactive}}
+      {{#evidence}}
+      <details class="obe-evidence mb-3" id="obe-evidence-{{id}}" {{#open}}open{{/open}}>
+        <summary><strong>Bukti #{{id}}</strong> · {{status}} · Revisi {{currentrevision}}</summary>
+        <div class="mt-3">
+          {{#legacysimulation}}<p class="alert alert-info">Analisis simulasi lama: kutipan belum dipilih per kriteria. Periksa transkrip atau buat analisis baru. Nilai yang sudah disahkan tetap berlaku.</p>{{/legacysimulation}}
+          {{#missing}}<p class="alert alert-warning"><strong>Bukti yang masih kurang:</strong> {{.}}</p>{{/missing}}
+          <p class="text-muted">Bobot kriteria di bawah menentukan nilai wawancara. Bobot aktivitas terhadap Sub-CPMK ditampilkan pada ringkasan di atas.</p>
+          <div class="obe-criteria">
+          {{#criteria}}
+            <section class="obe-criterion" aria-labelledby="obe-criterion-{{inputid}}">
+              <h4 class="h6" id="obe-criterion-{{inputid}}">{{label}}</h4>
+              <p><strong>Bobot kriteria:</strong> {{weight}}% · <strong>Skor usulan:</strong> {{proposed}}</p>
+              {{#quotes}}<blockquote><p>{{text}}</p><footer class="small">Jawaban pada giliran #{{turnid}}</footer></blockquote>{{/quotes}}
+              {{^hasquotes}}<p class="text-muted">Belum ada bukti relevan untuk kriteria ini.</p>{{/hasquotes}}
+              {{#criterionmissing}}<p class="text-warning"><strong>Bukti belum cukup:</strong> {{.}}</p>{{/criterionmissing}}
+            </section>
+          {{/criteria}}
+          </div>
+          {{#canapprove}}
+          <form method="post" action="{{action}}" class="obe-score-form" data-obe-score-form>
+            <input type="hidden" name="sesskey" value="{{sesskey}}"><input type="hidden" name="action" value="approve">
+            <input type="hidden" name="evidenceid" value="{{id}}"><input type="hidden" name="revision" value="{{revision}}">
+            <fieldset><legend class="h5">{{#issigned}}Koreksi nilai{{/issigned}}{{^issigned}}Pengesahan nilai{{/issigned}}</legend>
+              {{#stale}}<p class="alert alert-warning">{{#str}}review_stale, obeinterview{{/str}} <a href="{{action}}&amp;reviewid={{id}}#obe-evidence-{{id}}">Muat ulang usulan</a></p>{{/stale}}
+              {{#formerror}}<p class="alert alert-danger" role="alert">{{.}}</p>{{/formerror}}
+              {{#criteria}}
+              <div class="form-group">
+                <label for="{{inputid}}">{{label}} {{#required}}(wajib){{/required}}</label>
+                <input class="form-control obe-score-input" type="number" id="{{inputid}}" name="scores[{{id}}]" min="0" max="100" step="any" value="{{value}}" data-weight="{{rawweight}}" data-required="{{#required}}1{{/required}}{{^required}}0{{/required}}" {{#required}}required{{/required}} aria-describedby="{{inputid}}-help {{inputid}}-error" {{#error}}aria-invalid="true"{{/error}}>
+                <small class="form-text text-muted" id="{{inputid}}-help">Rentang 0–100. Bobot kriteria {{weight}}%. Angka 0 adalah skor yang sah.</small>
+                <span class="text-danger" id="{{inputid}}-error">{{error}}</span>
+              </div>
+              {{/criteria}}
+              <p class="obe-grade-preview" role="status" aria-live="polite"><strong>Pratinjau nilai wawancara:</strong> <output data-obe-preview>{{preview}}</output><span>/100</span></p>
+              <p class="small text-muted">Jumlah skor × bobot setiap kriteria, dibulatkan sampai 5 desimal. Nilai akhir dikonfirmasi server saat disimpan.</p>
+              <div class="form-group">
+                <label for="obe-reason-{{id}}">Alasan koreksi / pengesahan</label>
+                <textarea class="form-control" id="obe-reason-{{id}}" name="reason" rows="3" maxlength="4000" required aria-describedby="obe-reason-help-{{id}} obe-reason-error-{{id}}" {{#reasonerror}}aria-invalid="true"{{/reasonerror}}>{{reason}}</textarea>
+                <small id="obe-reason-help-{{id}}" class="form-text text-muted">Wajib. Jelaskan dasar penilaian atau perubahan skor secara singkat. Gunakan alasan singkat; ringkas bila sistem meminta Anda memendekkannya.</small>
+                <span id="obe-reason-error-{{id}}" class="text-danger">{{reasonerror}}</span>
+              </div>
+              <button type="submit" class="btn btn-primary" {{#stale}}disabled{{/stale}}>{{button}}</button>
+            </fieldset>
+          </form>
+          {{/canapprove}}
+          {{^canapprove}}<p class="alert alert-info">Bukti ini belum dapat disahkan. Tinjau bukti yang masih kurang; bila diperlukan, buka kembali wawancara dengan alasan.</p>{{/canapprove}}
+          <details class="mt-3"><summary>Detail teknis</summary><pre class="obe-technical" tabindex="0" aria-label="Detail teknis">{{json}}</pre></details>
+        </div>
+      </details>
+      {{/evidence}}
+      {{^transcriptloaded}}<p><a href="{{transcripturl}}">Lihat transkrip {{name}}</a></p>{{/transcriptloaded}}
+      {{#transcriptloaded}}<details class="mb-3" id="obe-transcript-{{id}}" open><summary>Lihat transkrip</summary>
+        <ol class="obe-review-transcript">{{#transcript}}<li id="obe-turn-{{id}}"><strong>{{speaker}}</strong> <span class="small text-muted">{{time}}</span><p>{{body}}</p></li>{{/transcript}}</ol>
+        {{#snapshot}}<p><strong>Snapshot proyek:</strong> <code>{{snapshot}}</code></p>{{/snapshot}}
+        {{#projectjson}}<details><summary>Detail teknis hasil tes dari snapshot yang sama</summary><pre class="obe-technical" tabindex="0" aria-label="Detail teknis">{{.}}</pre></details>{{/projectjson}}
+      </details>
+      {{/transcriptloaded}}
+      <details class="mb-3"><summary>Riwayat penilaian</summary>
+        {{^hashistory}}<p>Belum ada keputusan pengesahan nilai.</p>{{/hashistory}}
+        <ol class="obe-review-history">{{#history}}<li><p><strong>Nilai {{score}}/100</strong> · Bukti #{{evidenceid}} · Keputusan #{{id}} · Revisi {{revision}}</p><p>{{time}} · Penilai: {{actor}}</p><ul>{{#criteria}}<li>{{label}}: {{score}}</li>{{/criteria}}</ul><p><strong>Alasan:</strong> {{reason}}</p></li>{{/history}}</ol>
+      </details>
+      {{#canreopen}}<details><summary>Buka kembali wawancara</summary>
+        <form method="post" action="{{action}}" class="mt-3">
+          <input type="hidden" name="sesskey" value="{{sesskey}}"><input type="hidden" name="sid" value="{{id}}"><input type="hidden" name="action" value="reopen">
+          <label for="obe-reopen-{{id}}">Alasan membuka kembali wawancara</label>
+          <textarea id="obe-reopen-{{id}}" class="form-control mb-2" rows="2" name="reason" maxlength="4000" required aria-describedby="obe-reopen-help-{{id}}">{{reopenreason}}</textarea>
+          <p id="obe-reopen-help-{{id}}" class="small text-muted">Jelaskan bukti tambahan yang diperlukan. Transkrip dan riwayat nilai tetap tersimpan.</p>
+          <button class="btn btn-outline-secondary" type="submit">Buka kembali wawancara</button>
+        </form>
+      </details>{{/canreopen}}
+    </div>
+  </article>
+  {{/sessions}}
+</section>

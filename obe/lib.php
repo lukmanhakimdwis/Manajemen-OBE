@@ -8,15 +8,16 @@ function local_obe_extend_settings_navigation(settings_navigation $settingsnav, 
     global $PAGE;
 
     // --- MENU ADMIN ---
-    if (has_capability('local/obe:manage', context_system::instance())) {
+    if (isloggedin() && !isguestuser() && (\local_obe\access_guard::is_system_manager() || (\local_obe\access_guard::get_kaprodi_prodi() && \local_obe\access_guard::has_any_system_capability(['local/obe:manageprogram','local/obe:viewprogramreport','local/obe:configprogramscale'])))) {
         $siteadmin = $settingsnav->find('root', navigation_node::TYPE_SITE_ADMIN);
         if (!$siteadmin) {
             $siteadmin = $settingsnav->find('siteadmin', navigation_node::TYPE_SITE_ADMIN);
         }
-        if ($siteadmin && !$siteadmin->find('obe_admin', navigation_node::TYPE_SETTING)) {
+        $siteadmin=$siteadmin?:$settingsnav;
+        if (!$siteadmin->find('obe_admin', navigation_node::TYPE_SETTING)) {
             $url_admin = new moodle_url('/local/obe/views/admin/dashboard.php');
             $siteadmin->add(
-                'Manajemen OBE (Admin)',
+                'OBE Program Studi',
                 $url_admin,
                 navigation_node::TYPE_SETTING,
                 null,
@@ -35,15 +36,15 @@ function local_obe_extend_navigation_course(navigation_node $navigation, stdClas
     global $USER;
 
     // 1. Menu untuk Dosen atau Admin Mata Kuliah
-    if (has_capability('local/obe:managecourse', $context)) {
+    if ((has_capability('local/obe:managecourse', $context) || has_capability('local/obe:viewreport', $context))) {
         if (!$navigation->find('obe_dosen_tab', navigation_node::TYPE_SETTING)) {
             $url = new moodle_url('/local/obe/views/dosen/dashboard.php', [
                 'id'      => $course->id,
-                'halaman' => 'aktivitas_nilai'
+                'halaman' => 'beranda'
             ]);
 
             $navigation->add(
-                'Manajemen OBE',
+                'OBE Kelas',
                 $url,
                 navigation_node::TYPE_SETTING,
                 null,
@@ -58,7 +59,7 @@ else {
 
         // Pastikan user adalah mahasiswa
         if (
-            is_enrolled($context, $USER) &&
+            is_enrolled($context, $USER) && has_capability('local/obe:viewownreport', $context) &&
             !has_capability('moodle/course:update', $context)
         ) {
 
@@ -93,24 +94,24 @@ else {
 
 /**
  * HOOK 3: Course Module Deletion Handler
- * Menghapus relasi di tabel aktivitas saat suatu aktivitas (kuis, tugas, dll) dihapus dari Course.
- * @param int $cmid ID dari tabel course_modules
+ * Protect history before Moodle destroys module grades. Empty mappings stay
+ * reserved until core actually removes course_modules, including async deletion.
+ * @param stdClass $cm Course module supplied by course_delete_module.
  */
-function local_obe_pre_course_module_delete($cmid) {
-    global $DB;
-    
-    $DB->delete_records('local_obe_aktivitas_map', ['cmid' => $cmid]);
+function local_obe_pre_course_module_delete($cm) {
+    \local_obe\local\assessment_integrity::before_module_delete($cm);
 }
 
 /**
  * Render tata letak kustom OBE
  */
 function local_obe_render_tata_letak($konten, $halaman_aktif = '') {
-    global $OUTPUT;
+    global $OUTPUT, $PAGE, $CFG;
     $GLOBALS['obe_halaman_aktif'] = $halaman_aktif;
 
+    $PAGE->requires->js(new moodle_url('/local/obe/accessibility.js',['v'=>substr(hash_file('sha256',$CFG->dirroot.'/local/obe/accessibility.js'),0,12)]));
     echo $OUTPUT->header();
-    echo '<div class="container-fluid mt-3"><div class="row">';
+    echo '<div class="obe-workspace container-fluid mt-3"><div class="row">';
     echo '<div class="col-md-3 mb-4">';
     require(__DIR__ . '/layout/sidebar.php');
     echo '</div>';
@@ -118,3 +119,4 @@ function local_obe_render_tata_letak($konten, $halaman_aktif = '') {
     echo '</div></div>';
     echo $OUTPUT->footer();
 }
+

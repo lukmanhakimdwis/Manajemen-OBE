@@ -4,10 +4,11 @@ defined('MOODLE_INTERNAL') || die();
 use local_obe\manager\aktivitasnilai_manager;
 use local_obe\manager\kompetensi_manager;
 
-global $SESSION, $DB;
+global $SESSION, $DB, $OUTPUT;
 
 // 1. Ambil parameter dari URL/Request
-$courseid = required_param('id', PARAM_INT); 
+$courseid = required_param('id', PARAM_INT);
+$failed=$SESSION->obe_mapping_form[$courseid]??null;unset($SESSION->obe_mapping_form[$courseid]); 
 $map_id   = optional_param('map_id', 0, PARAM_INT);
 $cmid     = optional_param('cmid', 0, PARAM_INT);
 
@@ -22,6 +23,11 @@ if ($tahun_akademik == 0) {
 $data = ($map_id > 0) ? aktivitasnilai_manager::ambil_satu_pemetaan($map_id) : null;
 
 if ($data) { get_coursemodule_from_id('', $data->cmid, $courseid, false, MUST_EXIST); }
+if ($data&&\local_obe\local\assessment_integrity::used((int)$data->cmid)) {
+    echo $OUTPUT->notification('Aspek sudah memiliki nilai (termasuk 0) atau riwayat. Bobot dan target tidak dapat diubah melalui penyuntingan biasa. Gunakan penggantian aspek untuk melihat dampak dan menyimpan riwayat.','warning');
+    echo html_writer::link(new moodle_url('/local/obe/views/dosen/aktivitas_nilai/replace.php',['courseid'=>$courseid,'id'=>$data->id]),'Tinjau penggantian aspek',['class'=>'btn btn-primary']);return;
+}
+
 
 // Ambil daftar Sub-CPMK berdasarkan tahun akademik yang sudah divalidasi
 $daftar_sub_cpmk = kompetensi_manager::ambil_semua_sub_cpmk_berdasarkan_tahun($tahun_akademik, $courseid);
@@ -66,6 +72,7 @@ if ($data) {
     <i class="fa fa-<?= $map_id ? 'edit' : 'plus-circle' ?> mr-1"></i> <?= $map_id ? 'Edit Pemetaan Aktivitas' : 'Tambah Pemetaan Aktivitas' ?>
 </div>
     <div class="card-body p-4">
+        <?php $selectedcm=get_coursemodule_from_id('',$data?$data->cmid:$cmid,$courseid,false,MUST_EXIST); ?><p><strong>Aktivitas:</strong> <?= s(get_fast_modinfo($courseid)->get_cm($selectedcm->id)->name) ?></p><p class="text-muted">Perubahan pemetaan memengaruhi laporan OBE. Jika wawancara sudah memiliki sesi, perubahan target perlu ditinjau terhadap bukti historis.</p>
         <form action="<?= $form_url->out() ?>" method="post" id="form-pemetaan">
             <input type="hidden" name="courseid" value="<?= $courseid ?>">
             <input type="hidden" name="sesskey" value="<?= sesskey() ?>">
@@ -74,12 +81,12 @@ if ($data) {
             <input type="hidden" name="cmid" value="<?= $data ? $data->cmid : $cmid ?>">
 
             <div class="form-group mb-3">
-                <label class="font-weight-bold">Pilih Sub-CPMK <span class="text-danger">*</span></label>
+                <label for="sub_cpmk_id" class="font-weight-bold">Pilih Sub-CPMK <span class="text-danger">*</span></label>
                 <select name="sub_cpmk_id" id="sub_cpmk_id" class="form-control custom-select" required>
                     <option value="0">-- Pilih Sub-CPMK --</option>
                     <?php if (!empty($daftar_sub_cpmk)): ?>
                         <?php foreach ($daftar_sub_cpmk as $sc): ?>
-                            <option value="<?= $sc->id ?>" <?= ($data && $data->sub_cpmk_id == $sc->id) ? 'selected' : '' ?>>
+                            <option value="<?= $sc->id ?>" <?= (($failed?($failed['sub_cpmk_id']==$sc->id):($data && $data->sub_cpmk_id == $sc->id))) ? 'selected' : '' ?>>
                                 <?= s($sc->nama_kompetensi) ?>
                             </option>
                         <?php endforeach; ?>
@@ -91,14 +98,14 @@ if ($data) {
                 <div id="hierarki-subcpmk" class="alert alert-info mt-3 shadow-sm border-0 small" style="display:none; line-height: 1.6; border-radius: 8px;">
                 </div>
                 
-                <div id="info-sisa-bobot" class="mt-2 small font-weight-bold"></div>
+                <div id="info-sisa-bobot" role="status" aria-live="polite" class="mt-2 small font-weight-bold"></div>
             </div>
             
             <div class="form-group mb-4">
-                <label class="font-weight-bold">Bobot Penilaian (0 - 100%) <span class="text-danger">*</span></label>
+                <label for="bobot" class="font-weight-bold">Bobot aktivitas terhadap Sub-CPMK (0 - 100%) <span class="text-danger">*</span></label>
                 <div class="input-group" style="max-width: 300px;">
                     <input type="number" step="0.01" min="0" max="100" name="bobot" id="bobot" class="form-control text-center font-weight-bold" 
-                           value="<?= $nilai_bobot ?>" placeholder="Contoh: 25.5" required>
+                           value="<?= s($failed?$failed['bobot']:$nilai_bobot) ?>" placeholder="Contoh: 25.5" required>
                     <div class="input-group-append">
                         <span class="input-group-text font-weight-bold">%</span>
                     </div>
@@ -107,7 +114,7 @@ if ($data) {
 
             <div class="mt-4 pt-3 border-top d-flex justify-content-start">
                 <button type="submit" class="btn btn-primary px-4 font-weight-bold shadow-sm mr-2">
-                    <i class="fa fa-save mr-1"></i> Simpan Relasi
+                    <i class="fa fa-save mr-1"></i> Simpan pemetaan
                 </button>
                 <a href="?id=<?= $courseid ?>&halaman=aktivitas_nilai" class="btn btn-light px-4 border">Batal</a>
             </div>
@@ -145,7 +152,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const usedPercent = used;
         const sisa = 100 - usedPercent;
 
-        if (currentBobot > (sisa + 0.001)) {
+        if (currentBobot > (sisa + 0.000001)) {
             infoBox.innerHTML = '<span class="text-danger"><i class="fa fa-exclamation-circle mr-1"></i>Melebihi kapasitas! Sisa tersedia untuk Sub-CPMK ini: ' + formatPersen(sisa) + '%</span>';
             return false;
         } else {
